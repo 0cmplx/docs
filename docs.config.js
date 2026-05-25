@@ -90,6 +90,10 @@ export default {
       }
       .sd-card:hover {
         border-color: rgba(255, 255, 255, 0.2);
+        text-decoration: none !important;
+      }
+      .sd-card, .sd-card * {
+        text-decoration: none !important;
       }
       [data-theme="light"] .sd-card:hover {
         border-color: rgba(0, 0, 0, 0.15);
