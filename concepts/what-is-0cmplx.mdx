@@ -5,17 +5,13 @@ description: A research and experimental platform for testing AI agents, MCP ser
 
 0cmplx is a research and experimental platform. It exists because the space between AI models and the tools they call is still mostly unexplored, and the people building in that space need somewhere to experiment safely.
 
-## What it does today
+## What it does
 
-You connect your AI agent to mock MCP servers that simulate real-world tools: APIs, databases, file systems. Some of those servers are designed to behave well. Others are designed to break your agent, using attack patterns drawn from OWASP research: prompt injection, tool poisoning, excessive agency, data exfiltration.
+Connect your AI agent to mock MCP servers that simulate real-world tools: APIs, databases, file systems. Some behave well. Others are designed to break your agent, using attack patterns drawn from OWASP research: prompt injection, tool poisoning, excessive agency, data exfiltration.
 
 You watch what happens. You see which attacks land and which your agent resists. You get a security score and a performance profile. Then you iterate.
 
-No production data at risk. No live systems exposed. Just a sandbox where you can push your agent to its limits and learn what it does under pressure.
-
-## What it is becoming
-
-We are building toward a platform where you bring your own API spec or database schema and 0cmplx becomes the execution layer between your LLM and your data.
+Bring your own API spec or database schema and 0cmplx becomes the execution layer between your LLM and your data.
 
 <CardGroup cols={2}>
   <Card title="API mode" icon="plug">
@@ -27,6 +23,8 @@ We are building toward a platform where you bring your own API spec or database 
 </CardGroup>
 
 The LLM plans. 0cmplx executes. Any model, any provider, no lock-in.
+
+When you upload a spec or schema, 0cmplx builds a graph of how your endpoints and tables relate. Instead of showing the LLM everything, it surfaces only the relevant cluster per question. Fewer tokens, better tool selection, more accurate results.
 
 ## Who it is for
 
@@ -50,12 +48,9 @@ We think the interesting questions are not about the protocol itself. They are a
 
 0cmplx is where you explore these questions. Not in theory, but by running experiments.
 
-## What is coming
+## On the roadmap
 
 <Steps>
-  <Step title="Relationship-aware context">
-    When you upload a spec or schema, 0cmplx builds a graph of how your endpoints and tables relate. Instead of showing the LLM everything, it surfaces only the relevant cluster per question. Fewer tokens, better tool selection, more accurate results.
-  </Step>
   <Step title="Execution streaming">
     Watch the LLM write a script token by token. See each API call and SQL query execute in real-time. Full visibility into the execution pipeline, not just the final answer.
   </Step>
