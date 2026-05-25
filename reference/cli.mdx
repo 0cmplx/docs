@@ -3,59 +3,106 @@ title: CLI reference
 description: Complete reference for the 0cmplx command-line interface.
 ---
 
-## 0cmplx generate
+The 0cmplx CLI is a thin client to the 0cmplx cloud. It authenticates with your account, sends commands to the cloud API, and streams results back to your terminal. Nothing runs locally except reading your spec files.
 
-Generate an MCP server from an OpenAPI specification.
+## Install
 
 ```bash
-0cmplx generate <spec-path> [options]
+npm install -g @0cmplx/cli
 ```
 
-### Arguments
+## Authentication
 
-| Argument | Description |
-|---|---|
-| `spec-path` | Path to the OpenAPI spec file (JSON or YAML) |
+### 0cmplx login
 
-### Options
-
-| Option | Default | Description |
-|---|---|---|
-| `--output`, `-o` | `./mcp-server` | Output directory for the generated project |
-| `--transport` | `stdio` | Transport mode: `stdio` or `http` |
-| `--port` | `3100` | Port for HTTP transport |
-| `--overwrite` | `false` | Overwrite existing files (preserves config) |
-
-### Examples
+Authenticate with your 0cmplx account via GitHub OAuth.
 
 ```bash
-# Generate with defaults
-0cmplx generate ./petstore.yaml
+0cmplx login
+```
 
-# Generate with HTTP transport
-0cmplx generate ./petstore.yaml -o ./my-server --transport http --port 8080
+Opens your browser to complete the GitHub OAuth flow. Stores your API token in `~/.0cmplx/credentials`.
 
-# Re-generate after spec changes
-0cmplx generate ./petstore.yaml -o ./my-server --overwrite
+### 0cmplx logout
+
+Clear stored credentials.
+
+```bash
+0cmplx logout
+```
+
+### 0cmplx whoami
+
+Show the current authenticated user and tier.
+
+```bash
+0cmplx whoami
 ```
 
 ---
 
-## 0cmplx test
+## Execute
 
-Run security traps against an MCP server.
+### 0cmplx execute init
+
+Upload a spec or schema to the cloud and create an execution context.
+
+```bash
+0cmplx execute init --spec <path> [options]
+0cmplx execute init --schema <path> [options]
+```
+
+| Option | Description |
+|---|---|
+| `--spec` | Path to OpenAPI spec or Postman collection (JSON/YAML) |
+| `--schema` | Path to SQL schema file (CREATE TABLE DDL) |
+| `--seed` | Path to seed data file (SQL INSERT statements or CSV) |
+| `--auth` | Auth configuration for API mode (e.g., `bearer:$KEY`) |
+
+The spec is uploaded to the cloud. The cloud parses it, builds the relationship graph, and returns the available functions or tables.
+
+### 0cmplx execute run
+
+Send a prompt to the cloud. The LLM writes a script, the cloud executes it, and results stream back to your terminal.
+
+```bash
+0cmplx execute run --prompt <text> [options]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--prompt`, `-p` | required | Natural language question |
+| `--format` | `text` | Output format: `text` or `json` |
+| `--dry-run` | `false` | Show the generated script without executing |
+
+Output streams in real-time: script generation token by token, bridge calls with timing, final results.
+
+### 0cmplx execute inspect
+
+Show the current execution context.
+
+```bash
+0cmplx execute inspect
+```
+
+Lists available functions (API mode) or tables (SQL mode), auth configuration, and sandbox settings.
+
+---
+
+## Test
+
+### 0cmplx test
+
+Run OWASP security traps via the cloud against a target MCP server.
 
 ```bash
 0cmplx test [options]
 ```
 
-### Options
-
 | Option | Default | Description |
 |---|---|---|
-| `--target`, `-t` | | URL of the running MCP server (HTTP transport) |
-| `--command`, `-c` | | Command to spawn the server (stdio transport) |
-| `--category` | all | Run traps from a specific category: `injection`, `exposure`, `access`, `resource` |
+| `--target`, `-t` | required | URL of the MCP server to test |
+| `--category` | all | Trap category: `injection`, `exposure`, `access`, `resource` |
 | `--trap` | all | Run a single named trap (e.g., `injection/sql-fragment`) |
 | `--tools` | all | Comma-separated list of tool names to test |
 | `--format` | `text` | Output format: `text` or `json` |
@@ -64,45 +111,15 @@ Run security traps against an MCP server.
 ### Examples
 
 ```bash
-# Test a running HTTP server
+# Test a running MCP server
 0cmplx test --target http://localhost:3100
-
-# Test a stdio server
-0cmplx test --command "node server.js"
 
 # Test only injection traps
 0cmplx test -t http://localhost:3100 --category injection
 
 # JSON output for CI
 0cmplx test -t http://localhost:3100 --format json --output report.json
-
-# Test specific tools
-0cmplx test -t http://localhost:3100 --tools createPet,deletePet
 ```
-
----
-
-## 0cmplx init
-
-Create a `0cmplx.config.json` file in the current directory.
-
-```bash
-0cmplx init
-```
-
-Generates a minimal configuration file you can customise before running `generate`.
-
----
-
-## 0cmplx list-traps
-
-List all available security traps.
-
-```bash
-0cmplx list-traps [--category <category>]
-```
-
-Prints the name, category, and description of each trap. Useful for understanding what `0cmplx test` will run.
 
 ---
 
@@ -110,8 +127,8 @@ Prints the name, category, and description of each trap. Useful for understandin
 
 | Code | Meaning |
 |---|---|
-| `0` | Success (all tests passed, or generation completed) |
+| `0` | Success |
 | `1` | One or more test failures |
-| `2` | Configuration or input error |
+| `2` | Configuration or auth error |
 
 Warnings do not cause a non-zero exit code. If you want to fail on warnings, check the JSON report.
