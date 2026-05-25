@@ -1,0 +1,112 @@
+---
+title: Security traps
+description: Complete catalogue of 0cmplx's OWASP security traps.
+---
+
+Each trap targets a specific vulnerability pattern. They are grouped by category and run in order. Use `0cmplx list-traps` to see this list from the command line.
+
+## Injection
+
+Traps that test whether tool parameters can carry payloads that the server executes or passes through.
+
+### injection/sql-fragment
+
+Sends tool parameters containing SQL fragments (`' OR 1=1 --`, `; DROP TABLE`, etc.) and checks whether the response changes in a way that suggests the fragment was executed.
+
+**What a failure means**: a tool parameter is being interpolated into a SQL query without parameterisation.
+
+### injection/shell-command
+
+Sends parameters containing shell metacharacters and command sequences (`; ls`, `$(whoami)`, backticks). Checks for signs of command execution in the response.
+
+**What a failure means**: a tool parameter is being passed to a shell command without sanitisation.
+
+### injection/prompt-in-parameter
+
+Sends parameters containing text designed to alter downstream LLM behaviour ("ignore previous instructions", "you are now..."). Checks whether the response indicates the text was treated as an instruction rather than data.
+
+**What a failure means**: tool parameters are being injected into prompts without escaping or separation.
+
+### injection/path-traversal
+
+Sends parameters containing path traversal sequences (`../`, `..%2F`). Checks whether the response contains data from outside the expected directory.
+
+**What a failure means**: a file path is being constructed from user input without validation.
+
+---
+
+## Exposure
+
+Traps that check whether tool responses include more data than necessary.
+
+### exposure/response-fields
+
+Calls each tool and inspects the response for fields that look internal: names starting with `_`, fields containing `token`, `secret`, `password`, `key`, `hash`, or similar patterns.
+
+**What a warning means**: the response includes fields that might be internal. Review whether they should be filtered.
+
+### exposure/error-details
+
+Triggers errors (invalid parameters, missing required fields) and checks whether the error response contains stack traces, file paths, database names, or IP addresses.
+
+**What a failure means**: error handling is leaking implementation details.
+
+### exposure/schema-leak
+
+Sends unexpected parameter shapes and checks whether validation error messages reveal the full expected schema, including fields the caller should not know about.
+
+**What a warning means**: validation errors are too detailed. Return "invalid input", not a message that reveals the full expected shape.
+
+---
+
+## Access
+
+Traps that test authentication and authorisation enforcement.
+
+### access/unauthenticated-call
+
+Calls each tool without providing credentials. Checks whether the tool executes successfully.
+
+**What a failure means**: a tool is accessible without authentication.
+
+### access/id-enumeration
+
+Calls tools that accept ID parameters with sequential values (1, 2, 3...) and checks whether each returns different data. If sequential IDs return valid data, the resource might be enumerable.
+
+**What a warning means**: resources use predictable IDs. Consider whether this is acceptable for your use case.
+
+### access/cross-reference
+
+For tools that accept a user or organisation ID, calls with an ID that does not belong to the authenticated context. Checks whether data is returned.
+
+**What a failure means**: the tool does not enforce ownership checks. One user can access another's data.
+
+---
+
+## Resource
+
+Traps that test for resource exhaustion and abuse patterns.
+
+### resource/unbounded-list
+
+Calls list tools without pagination parameters and checks whether the response is larger than a reasonable threshold (default: 1 MB or 1000 items).
+
+**What a warning means**: the tool returns too much data when no limit is specified. Add default pagination.
+
+### resource/large-payload
+
+Sends tool calls with unusually large parameters (long strings, large arrays) and checks whether the server handles them gracefully or times out.
+
+**What a failure means**: the server does not enforce input size limits.
+
+### resource/rapid-calls
+
+Calls the same tool repeatedly in quick succession (default: 50 calls in 5 seconds). Checks whether the server applies rate limiting.
+
+**What a warning means**: no rate limiting detected. An AI agent in a loop could exhaust your API's resources.
+
+---
+
+## Writing custom traps
+
+0cmplx's built-in traps cover common patterns, but every API has unique risks. Custom traps are on the roadmap. In the meantime, the built-in traps serve as a starting point, and you can extend your testing with standard tools like integration tests or manual probing guided by the patterns described here.

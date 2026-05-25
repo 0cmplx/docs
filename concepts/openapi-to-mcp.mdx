@@ -1,0 +1,102 @@
+---
+title: OpenAPI to MCP
+description: How 0cmplx translates an OpenAPI specification into MCP tool definitions.
+---
+
+An OpenAPI spec is a machine-readable description of an API. It lists endpoints, parameters, request bodies, response shapes, and authentication requirements. An MCP server exposes tools with names, descriptions, and input schemas. The two are surprisingly compatible.
+
+0cmplx reads the spec and maps each endpoint to a tool. The mapping is not always one-to-one. Some endpoints become multiple tools, some get combined, and some are skipped entirely. This page walks through how 0cmplx thinks about the translation.
+
+## Endpoints become tools
+
+Each path and method pair in the OpenAPI spec becomes a candidate tool:
+
+```yaml
+# OpenAPI
+paths:
+  /pets:
+    get:
+      summary: List all pets
+      operationId: listPets
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+```
+
+```json
+// Generated MCP tool
+{
+  "name": "listPets",
+  "description": "List all pets",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "limit": { "type": "integer" }
+    }
+  }
+}
+```
+
+The `operationId` becomes the tool name. The `summary` becomes the description. Path parameters, query parameters, and request body properties become the input schema.
+
+## Naming matters more than you think
+
+AI models choose tools based on their names and descriptions. A tool called `get_api_v2_pets_list` is harder for a model to reason about than one called `listPets`. 0cmplx uses the `operationId` when available, and falls back to a generated name derived from the path and method.
+
+You can override any name in the configuration file. This is worth doing. A well-named tool gets called correctly more often.
+
+## Request bodies
+
+For `POST` and `PUT` endpoints, the request body schema is flattened into the tool's input schema:
+
+```yaml
+# OpenAPI
+paths:
+  /pets:
+    post:
+      summary: Create a pet
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                species:
+                  type: string
+              required:
+                - name
+```
+
+The tool's input schema will include `name` (required) and `species` (optional) as top-level properties. The AI model fills them in as tool parameters, and 0cmplx's generated handler assembles the request body.
+
+## What gets skipped
+
+Not every endpoint makes a good tool. 0cmplx skips:
+
+- **File upload endpoints** unless explicitly included. Binary data and multipart forms do not map cleanly to tool parameters.
+- **Deprecated endpoints** marked with `deprecated: true`.
+- **Endpoints without descriptions**. A tool with no description is useless to an AI model.
+
+You can override these defaults. If you want a deprecated endpoint included, add it to the configuration file's include list.
+
+## Authentication
+
+If the OpenAPI spec defines security schemes (API keys, Bearer tokens, OAuth), 0cmplx generates the authentication wiring. The generated server reads credentials from environment variables and attaches them to outgoing requests.
+
+The spec tells 0cmplx what kind of auth is needed. You provide the actual credentials at runtime.
+
+## Customisation
+
+The generated server is yours to modify. 0cmplx does not lock you in. Every tool handler is a plain function you can edit. The configuration file lets you:
+
+- Rename tools
+- Exclude specific endpoints
+- Add custom descriptions
+- Override parameter types
+- Group related tools
+
+Think of the generated code as a starting point, not a finished product.

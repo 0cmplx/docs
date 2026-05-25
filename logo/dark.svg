@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 28" fill="none">
+  <g transform="translate(2,4) rotate(90 10 10) scale(0.038)">
+    <path fill="#a0a0a0" d="M256 512c-96.495 0-175-78.505-175-175V175C81 78.505 159.505 0 256 0s175 78.505 175 175v162c0 96.495-78.505 175-175 175zm0-422c-46.869 0-85 38.131-85 85v162c0 46.869 38.131 85 85 85s85-38.131 85-85V175c0-46.869-38.131-85-85-85z"/>
+    <path fill="#606060" d="M256 0v90c46.869 0 85 38.131 85 85v162c0 46.869-38.131 85-85 85v90c96.495 0 175-78.505 175-175V175C431 78.505 352.495 0 256 0z"/>
+  </g>
+  <text x="28" y="20" font-family="'Geist Mono', monospace" font-size="16" font-weight="700" fill="#e5e5e5" letter-spacing="-0.5">0cmplx</text>
+  <text x="102" y="19" font-family="'Geist Mono', monospace" font-size="8" font-weight="500" fill="#606060" letter-spacing="1.5">DOCS</text>
+</svg>

@@ -1,0 +1,95 @@
+---
+title: Anatomy of a tool
+description: What makes up an MCP tool and what 0cmplx generates for each one.
+---
+
+An MCP tool is the atomic unit of functionality that an AI agent can call. Understanding what goes into a tool helps you write better ones, whether you generate them with 0cmplx or build them by hand.
+
+## The parts
+
+Every tool has four components:
+
+### Name
+
+A short identifier. The AI model sees this when deciding which tool to call.
+
+```
+createPet
+```
+
+Good names are verbs or verb-noun pairs. They describe what the tool does, not how. `createPet` is better than `postToPetsEndpoint`. The model does not care about HTTP methods or URL paths; it cares about intent.
+
+### Description
+
+A natural language explanation. This is the most important field for tool selection. The model reads this to decide whether the tool is relevant to the user's question.
+
+```
+Create a new pet record with a name and species. Returns the created pet with its assigned ID.
+```
+
+Write descriptions for the model, not for humans. Be specific about what the tool does, what it returns, and any side effects. If the tool deletes data, say so. If it requires specific permissions, mention them.
+
+### Input schema
+
+A JSON Schema definition of what parameters the tool accepts.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The pet's name"
+    },
+    "species": {
+      "type": "string",
+      "enum": ["dog", "cat", "bird", "fish"],
+      "description": "The type of animal"
+    }
+  },
+  "required": ["name"]
+}
+```
+
+The schema serves two purposes: it tells the model what to provide, and it lets the server validate what arrives. 0cmplx generates schemas directly from the OpenAPI spec's parameter and request body definitions.
+
+Property descriptions matter. A field called `id` could be anything. A field described as "the pet's unique identifier, assigned by the server" is unambiguous.
+
+### Handler
+
+The function that runs when the tool is called. In a 0cmplx-generated server, handlers call your API using the parameters the model provided.
+
+```javascript
+async function createPet({ name, species }) {
+  const response = await fetch(`${API_BASE}/pets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, species }),
+  });
+  return response.json();
+}
+```
+
+The handler is where security matters most. Input validation, authentication, error handling, and response filtering all happen here.
+
+## What 0cmplx generates
+
+For each endpoint in your OpenAPI spec, 0cmplx produces:
+
+| Component | Source |
+|---|---|
+| Name | `operationId`, or derived from path and method |
+| Description | `summary` and `description` fields |
+| Input schema | Path parameters, query parameters, and request body schema |
+| Handler | A function that calls the original API endpoint |
+
+The generated code is plain, readable, and meant to be modified. 0cmplx does not use code generation patterns that are hard to follow. Each tool is a self-contained function in its own file.
+
+## Thinking about tool design
+
+A few questions worth asking about every tool:
+
+- **Can the model understand it from the name and description alone?** If you need to read the code to understand what it does, the description needs work.
+- **Does the input schema prevent invalid calls?** Use `required`, `enum`, `minimum`, `maximum`, and `pattern` to constrain inputs. The tighter the schema, the fewer bad calls.
+- **Does the handler return only what is needed?** Filter the response before returning it. The model does not need internal IDs, timestamps, or metadata that does not help answer the user's question.
+- **What happens on error?** Return a clear error message, not a stack trace. The model needs to understand what went wrong so it can try a different approach or tell the user.

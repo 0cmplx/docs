@@ -1,0 +1,123 @@
+---
+title: From an OpenAPI spec
+description: Generate a complete MCP server from an OpenAPI specification with 0cmplx.
+---
+
+If you have an OpenAPI spec, you are most of the way to an MCP server. 0cmplx reads the spec and produces a project with tool definitions, handlers, validation, and transport configuration.
+
+## Prerequisites
+
+- 0cmplx installed (`npm install -g 0cmplx`)
+- An OpenAPI 3.0 or 3.1 spec in JSON or YAML format
+
+## Generate
+
+```bash
+0cmplx generate ./api-spec.yaml --output ./my-server
+```
+
+0cmplx reads the spec and creates a project:
+
+```
+my-server/
+  0cmplx.config.json    # Configuration (edit this)
+  tools/                 # One file per tool
+    listPets.js
+    createPet.js
+    getPet.js
+    deletePet.js
+  server.js              # Entry point
+  package.json
+```
+
+Each file in `tools/` corresponds to an endpoint in the spec. The handler calls your original API with the parameters the AI model provides.
+
+## The configuration file
+
+`0cmplx.config.json` controls how the generation maps endpoints to tools:
+
+```json
+{
+  "apiBase": "https://api.example.com",
+  "transport": "stdio",
+  "tools": {
+    "listPets": {
+      "enabled": true,
+      "name": "listPets",
+      "description": "List all pets with optional filtering"
+    },
+    "deletePet": {
+      "enabled": true,
+      "confirm": true,
+      "description": "Permanently delete a pet record"
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "envVar": "API_TOKEN"
+  }
+}
+```
+
+Key options:
+
+- **enabled**: set to `false` to exclude a tool without deleting the file
+- **name**: override the generated tool name
+- **description**: override the description from the spec
+- **confirm**: mark a tool as requiring confirmation (the agent should ask the user before calling it)
+- **auth**: how the generated handlers authenticate with your API
+
+## Customising tool descriptions
+
+The description from your OpenAPI spec is the starting point, but it was probably written for human developers reading API docs. AI models need different information.
+
+Compare:
+
+```
+# From the spec
+"Returns a list of pets. Supports pagination via limit and offset parameters."
+
+# Better for AI
+"Search for pets. Returns name, species, and age for each match.
+Use the limit parameter to control how many results are returned (default 20, max 100).
+Returns an empty list if no pets match."
+```
+
+The second version tells the model what the response contains, what the defaults are, and what happens in the edge case. This leads to better tool selection and fewer wasted calls.
+
+## Transport options
+
+0cmplx supports two transport modes:
+
+### stdio (default)
+
+The server reads from stdin and writes to stdout. This is the simplest mode. The AI agent spawns the server as a child process.
+
+```bash
+node server.js
+```
+
+### HTTP
+
+The server runs as an HTTP endpoint. Useful for remote connections or when multiple agents need to share a server.
+
+```bash
+0cmplx generate ./spec.yaml --output ./my-server --transport http --port 3100
+```
+
+## Re-generating
+
+If your OpenAPI spec changes, you can re-run the generate command. 0cmplx will update tool definitions and handlers while preserving your configuration overrides.
+
+Files you have modified manually are not overwritten. 0cmplx tracks which files are generated and which have been edited.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Run security tests" icon="shield" href="/guides/running-security-tests">
+    Test the generated server before deploying it.
+  </Card>
+  <Card title="Going to production" icon="rocket" href="/guides/going-to-production">
+    Checklist for deploying your MCP server.
+  </Card>
+</CardGroup>

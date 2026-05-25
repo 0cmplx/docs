@@ -1,0 +1,97 @@
+---
+title: Going to production
+description: A checklist for deploying your MCP server with confidence.
+---
+
+You have generated an MCP server, customised it, and run the security traps. Before deploying, walk through this checklist.
+
+## Security
+
+<Steps>
+  <Step title="Run 0cmplx test with zero failures">
+    All traps should pass or be acknowledged warnings. No failures.
+
+    ```bash
+    0cmplx test --target http://localhost:3100
+    ```
+  </Step>
+  <Step title="Review all warnings">
+    Each warning is a judgement call. Document why you are accepting it or fix it.
+  </Step>
+  <Step title="Check authentication on every tool">
+    Call each tool without credentials and verify it is rejected. Do not rely on the OpenAPI spec's security definitions alone; test the actual behaviour.
+  </Step>
+  <Step title="Review response filtering">
+    For each tool, check that the response includes only the fields the model needs. Remove internal IDs, timestamps, and metadata unless they serve the user.
+  </Step>
+  <Step title="Validate all parameters in handlers">
+    The input schema provides type checking, but handlers should validate values. Check string patterns, numeric ranges, and array lengths.
+  </Step>
+</Steps>
+
+## Configuration
+
+<Steps>
+  <Step title="Set API base URL from environment">
+    Do not hardcode URLs. Use environment variables.
+
+    ```json
+    {
+      "apiBase": "${API_BASE_URL}"
+    }
+    ```
+  </Step>
+  <Step title="Set credentials from environment">
+    API tokens, keys, and secrets should come from environment variables, never from the configuration file.
+  </Step>
+  <Step title="Choose transport">
+    Use stdio for local agents. Use HTTP for remote connections or shared servers. Set the port and host explicitly.
+  </Step>
+  <Step title="Disable unused tools">
+    If your API has endpoints that should not be exposed as tools, set `enabled: false` in the configuration.
+  </Step>
+</Steps>
+
+## Reliability
+
+<Steps>
+  <Step title="Add error handling to every handler">
+    Every handler should catch errors and return a message the model can understand. Never return stack traces or raw error objects.
+  </Step>
+  <Step title="Set response size limits">
+    List tools should have maximum page sizes. Large responses waste tokens and slow everything down.
+  </Step>
+  <Step title="Add request timeouts">
+    If your API is slow, the tool call should time out rather than hang. Set timeouts on all outgoing requests.
+  </Step>
+  <Step title="Log tool calls">
+    Record what tools were called, with what parameters, and what they returned. This is invaluable for debugging and auditing.
+  </Step>
+</Steps>
+
+## Deployment
+
+<Steps>
+  <Step title="Test in staging first">
+    Connect an AI agent to your server in a staging environment. Ask it questions that exercise your tools. Watch for unexpected behaviour.
+  </Step>
+  <Step title="Monitor after launch">
+    Watch your logs for unusual patterns: repeated failed calls, unexpected parameter values, or tools being called in sequences that do not make sense.
+  </Step>
+  <Step title="Plan for updates">
+    When your API changes, re-run `0cmplx generate` to pick up new endpoints. Re-run `0cmplx test` to check for regressions. The configuration file preserves your customisations.
+  </Step>
+</Steps>
+
+## The short version
+
+1. Zero test failures
+2. Warnings reviewed
+3. Auth on every tool
+4. Responses filtered
+5. Parameters validated
+6. Credentials from environment
+7. Error handling everywhere
+8. Tested in staging
+
+If all eight are done, deploy with confidence.

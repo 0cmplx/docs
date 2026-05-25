@@ -1,0 +1,51 @@
+---
+title: What is MCP
+description: A brief introduction to the Model Context Protocol and why it matters for AI tool use.
+---
+
+The Model Context Protocol (MCP) is a standard for connecting AI agents to external tools. It defines how an agent discovers what tools are available, what parameters they accept, and how to call them.
+
+Before MCP, every AI integration was bespoke. Each agent framework had its own way of defining tools, its own serialisation format, its own transport layer. If you built a tool for one framework, it did not work with another.
+
+MCP changes that. A single MCP server can be used by any agent that speaks the protocol. Build once, connect everywhere.
+
+## How it works
+
+An MCP server exposes a set of tools. Each tool has:
+
+- A **name** that identifies it
+- A **description** that tells the AI model what the tool does
+- An **input schema** that defines what parameters it accepts (JSON Schema)
+- A **handler** that executes when the tool is called
+
+When an AI agent connects to the server, it receives the list of available tools. The model reads the descriptions and schemas, decides which tools are relevant to the user's question, and calls them with appropriate parameters.
+
+The interaction is simple: the agent discovers tools, then calls them.
+
+<Steps>
+  <Step title="Discover">
+    The agent connects to the MCP server and receives the list of available tools with their names, descriptions, and input schemas.
+  </Step>
+  <Step title="Call">
+    The model decides which tool to call and provides the parameters. The server executes the handler and returns the result.
+  </Step>
+  <Step title="Repeat">
+    The model can call more tools based on the result, chaining operations until it has enough information to respond.
+  </Step>
+</Steps>
+
+## Why it matters
+
+MCP makes tools composable. An agent can connect to multiple MCP servers at once: one for your database, one for your calendar, one for your internal APIs. Each server is independent, focused, and reusable.
+
+For developers building tools, MCP means you write the integration once. For developers building agents, MCP means you can connect to any tool without writing custom adapters.
+
+## The gap 0cmplx fills
+
+MCP defines the protocol, but it does not tell you how to build a good server. It does not generate tool definitions from your existing API. It does not test whether your server is safe.
+
+That is where 0cmplx comes in. If MCP is the protocol, 0cmplx is the toolchain.
+
+<Info>
+MCP is an open protocol. You can read the full specification and explore the ecosystem at [modelcontextprotocol.io](https://modelcontextprotocol.io). 0cmplx builds on top of MCP but is not part of the protocol itself.
+</Info>

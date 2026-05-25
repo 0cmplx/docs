@@ -1,0 +1,104 @@
+---
+title: Sandbox architecture
+description: How 0cmplx Execute runs LLM-generated scripts securely using server-side Pyodide.
+---
+
+0cmplx Execute runs Python scripts in a sandboxed environment powered by Pyodide, a Python runtime compiled to WebAssembly. The sandbox runs server-side inside the 0cmplx process. It has no network access, no filesystem, and no dangerous imports. All external operations go through a host bridge that the server controls.
+
+## How it works
+
+The 0cmplx server contains two layers:
+
+<CardGroup cols={2}>
+  <Card title="Pyodide sandbox (WASM)" icon="box">
+    The LLM-generated Python script runs here. It handles loops, filtering, sorting, and data processing. SQLite runs natively in WASM for SQL mode. When the script calls a generated function, the call crosses the WASM boundary into the host bridge.
+  </Card>
+  <Card title="Host bridge (TypeScript)" icon="shield">
+    Runs in the 0cmplx server process. Makes HTTP calls to the user's API, injects auth headers, validates parameters, filters responses, enforces rate limits and timeouts, and logs every operation.
+  </Card>
+</CardGroup>
+
+When the script calls `await listPets()`, the call crosses from Pyodide into the host bridge. The bridge makes the real HTTP request, strips sensitive fields from the response, and returns the clean result to the script. The script continues.
+
+## Two execution paths
+
+### API mode
+
+The host bridge handles all HTTP communication:
+
+1. Script calls `await listPets(species="dog")`
+2. Bridge validates parameters against the OpenAPI schema
+3. Bridge sends `GET /pets?species=dog` with the user's auth header
+4. API responds with raw JSON
+5. Bridge filters the response (removes internal fields)
+6. Clean result returns to the script as a Python dict
+
+The script never constructs URLs, never sees auth tokens, never handles raw HTTP. It calls typed functions and gets typed results.
+
+### SQL mode
+
+SQLite runs natively inside Pyodide (compiled to WASM). No bridge needed:
+
+1. 0cmplx loads the user's schema into an in-memory SQLite database
+2. Sample data is inserted if provided
+3. Script calls `await query("SELECT ...")`
+4. The query executes entirely inside the WASM sandbox
+5. Results return as a list of dicts
+
+No database connections. No connection strings. No network calls. The entire database lives in memory inside the sandbox and is destroyed when the session ends.
+
+## What the sandbox allows
+
+The Python environment includes:
+- **Built-in types**: strings, numbers, lists, dicts, sets, tuples
+- **Data processing**: list comprehensions, `sorted()`, `max()`, `min()`, `sum()`, `filter()`, `map()`
+- **Safe standard library**: `json`, `math`, `datetime`, `collections`, `re`, `itertools`, `functools`
+- **Generated functions**: typed API client functions from the uploaded spec
+- **query()**: SQL execution function (SQL mode only)
+- **print()**: output that gets returned to the LLM
+
+## What the sandbox blocks
+
+- **Network access**: no `urllib`, no `requests`, no `socket`. All HTTP goes through the bridge.
+- **File I/O**: no `open()`, no `pathlib`, no `os.path`
+- **System access**: no `os`, no `subprocess`, no `sys.exit`
+- **Dangerous imports**: no `pickle`, no `eval`, no `exec`, no `compile`
+- **Unbounded execution**: scripts timeout after a configurable limit (default: 30 seconds)
+- **Memory**: WASM memory is capped per session
+
+## Session lifecycle
+
+1. **Init**: user uploads spec or schema. 0cmplx parses it and generates bridge functions.
+2. **Execute**: LLM writes a script. 0cmplx loads it into Pyodide and runs it.
+3. **Bridge calls**: each generated function call crosses to the host, executes, returns.
+4. **Output**: `print()` output is captured and returned.
+5. **Cleanup**: the Pyodide namespace is torn down. In-memory SQLite DB is discarded.
+
+Sessions are ephemeral by default. Each `execute run` starts fresh. State does not carry between runs unless explicitly configured.
+
+## Why Pyodide
+
+Pyodide is Python compiled to WebAssembly by the Mozilla team. It runs CPython 3.11+ in a WASM runtime with no access to the host system unless explicitly granted.
+
+For 0cmplx, this means:
+- **No Docker**: no container orchestration, no image pulls, no cold start penalty beyond the initial WASM load
+- **No process isolation needed**: WASM provides memory isolation by design
+- **SQLite included**: the SQLite C library is compiled into the WASM bundle
+- **Deterministic**: same script, same inputs, same results. No host environment leakage
+- **Fast**: ~200ms to initialise a fresh namespace after the runtime is cached
+
+## Security model
+
+The security boundary is the host bridge, not the sandbox itself. The sandbox is a computation environment. The bridge is the gatekeeper.
+
+| Concern | How it is handled |
+|---|---|
+| Credential exposure | Credentials are injected by the bridge, never passed to the script |
+| API abuse | Bridge enforces rate limits and timeouts per session |
+| Data leakage | Bridge filters API responses before returning to the script |
+| SQL injection | SQL mode uses parameterised queries where possible; OWASP traps test for injection |
+| Resource exhaustion | WASM memory cap + script timeout |
+| Code injection | Pyodide namespace is restricted; dangerous builtins are removed |
+| Schema enumeration | SQL mode only exposes tables from the uploaded schema |
+
+The OWASP security traps test all of these boundaries. They generate adversarial scripts and check whether the sandbox and bridge handle them correctly.

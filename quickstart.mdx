@@ -1,0 +1,67 @@
+---
+title: Quick start
+description: Connect your AI agent to mock MCP servers and test it against OWASP security traps.
+---
+
+0cmplx runs in your browser. No installation. No signup required.
+
+## Start a session
+
+Go to [0cmplx.com](https://0cmplx.com) and click **Start testing**. A session is created with three mock plugins pre-installed:
+
+- **Weather API** (utility): forecast, current conditions, alerts
+- **SQL Database** (data): users, orders, products with real CRUD operations
+- **Prompt Injection** (security): OWASP LLM01 attack patterns
+
+Each plugin is a fully functional MCP server your agent can connect to.
+
+## Connect your agent
+
+In the dashboard, select a plugin and click the **Connection** widget. You will see an MCP endpoint URL:
+
+```
+https://mcp.0cmplx.com/ses_abc123/weather/sse
+```
+
+Add this URL to your MCP client configuration (Claude Desktop, Cursor, or any MCP-compatible agent). The agent connects via SSE and discovers the available tools automatically.
+
+## Execute a tool
+
+You can also test tools directly from the dashboard without an external agent. Select a tool, fill in the parameters, and click **Execute**. The request and response appear in the log panel in real-time.
+
+Every tool call is logged: what was called, with what parameters, what came back, and how long it took.
+
+## Check security results
+
+If you are using a security plugin (Prompt Injection, Tool Poisoning, Excessive Agency, Data Exfiltration), the dashboard tracks your agent's behaviour:
+
+- **Injections caught vs missed**: did your agent detect the hidden instructions?
+- **Privilege escalations**: did your agent call destructive tools without confirmation?
+- **Data leaked**: did your agent expose conversation data to the tool?
+
+The security and performance widgets update in real-time as your agent interacts with the mock servers.
+
+## Browse more plugins
+
+Switch to the **Browse** view in the sidebar to see all available plugins. Install the ones you want to test against. Each plugin has its own set of tools, boosters, and attack patterns.
+
+## Sign in for more
+
+Sign in with GitHub to unlock pro features: longer sessions, 0cmplx Execute (API and SQL modes), and audit trails.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="What is 0cmplx?" icon="lightbulb" href="/concepts/what-is-0cmplx">
+    The full story: what we are building and where it is going.
+  </Card>
+  <Card title="0cmplx Execute" icon="zap" href="/concepts/programmatic-tools">
+    Upload your own spec or schema. The LLM scripts, 0cmplx runs.
+  </Card>
+  <Card title="Security testing" icon="shield" href="/concepts/security-testing">
+    How the OWASP traps work and what they test.
+  </Card>
+  <Card title="What is MCP?" icon="book-open" href="/concepts/what-is-mcp">
+    The protocol that connects AI agents to tools.
+  </Card>
+</CardGroup>

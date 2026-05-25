@@ -1,0 +1,46 @@
+---
+title: OWASP for MCP
+description: How traditional web security thinking applies to MCP servers, and where it breaks down.
+---
+
+OWASP has catalogued web application vulnerabilities for over two decades. Their top ten lists, cheat sheets, and testing guides are the foundation of modern application security. When you look at MCP servers through the OWASP lens, a lot of the same patterns appear, but the context shifts in interesting ways.
+
+This page is not a comprehensive OWASP guide. It is a set of observations about where web security wisdom applies to MCP and where the analogy breaks.
+
+## The caller is not a human
+
+In a traditional web application, the client is a browser controlled by a person. In MCP, the client is an AI model controlled by a conversation. This changes the threat model.
+
+A human attacker crafts requests deliberately. An AI agent crafts requests based on what it thinks will help the user. Sometimes the model gets it wrong. Sometimes the user's prompt contains instructions that redirect the model's behaviour. This is prompt injection, and it turns the AI agent into an unwitting attacker.
+
+The MCP server cannot tell the difference between a legitimate tool call and one that originated from a manipulated prompt. It sees the same well-formed request either way.
+
+## Injection still matters
+
+OWASP's injection category (A03:2021) applies directly. If a tool parameter is interpolated into a SQL query, a shell command, or an API call without sanitisation, the vulnerability is the same whether the input came from a form field or a tool call.
+
+The difference is in who provides the input. In a web app, you validate user input at the boundary. In MCP, the "user" is the AI model. You still need to validate, but you also need to consider that the model's inputs are derived from a conversation you do not control.
+
+## Data exposure is amplified
+
+OWASP's excessive data exposure (related to A01:2021) takes on new significance. In a web app, you might return extra fields in an API response and rely on the frontend to display only what is needed. In MCP, the AI model sees everything in the response. If you return internal IDs, email addresses, or tokens, the model might include them in its answer to the user, or worse, use them in subsequent tool calls.
+
+The rule of thumb: return only what the model needs to formulate a useful answer. Nothing more.
+
+## Access control is harder to reason about
+
+In a web app, you authenticate the user and authorise each request. In MCP, the immediate caller is the AI agent, which is acting on behalf of a user. The server needs to know not just "is this request authenticated" but "is the person behind this agent allowed to do this?"
+
+This is the confused deputy problem. The agent has credentials, but the person prompting it might not have the authority for the action the agent is about to take.
+
+## Rate limiting and resource control
+
+OWASP flags insufficient rate limiting and denial of service. MCP servers face a particular version of this: AI agents can call tools in a loop. If the model decides it needs to paginate through every record in a database, it will happily call the list tool hundreds of times.
+
+Your MCP server needs to handle this. Pagination limits, response size caps, and rate limiting are not optional features; they are safety measures.
+
+## Where the analogy breaks
+
+Not everything maps neatly. OWASP's categories around security misconfiguration, vulnerable dependencies, and cryptographic failures apply to MCP servers the same way they apply to any software. They are not MCP-specific.
+
+What is MCP-specific is the trust chain: user, model, agent, server, API. Each link adds a translation step where intent can be lost, modified, or subverted. OWASP's thinking gives you the vocabulary and the patterns, but the MCP context requires you to apply them with fresh eyes.

@@ -1,0 +1,117 @@
+---
+title: CLI reference
+description: Complete reference for the 0cmplx command-line interface.
+---
+
+## 0cmplx generate
+
+Generate an MCP server from an OpenAPI specification.
+
+```bash
+0cmplx generate <spec-path> [options]
+```
+
+### Arguments
+
+| Argument | Description |
+|---|---|
+| `spec-path` | Path to the OpenAPI spec file (JSON or YAML) |
+
+### Options
+
+| Option | Default | Description |
+|---|---|---|
+| `--output`, `-o` | `./mcp-server` | Output directory for the generated project |
+| `--transport` | `stdio` | Transport mode: `stdio` or `http` |
+| `--port` | `3100` | Port for HTTP transport |
+| `--overwrite` | `false` | Overwrite existing files (preserves config) |
+
+### Examples
+
+```bash
+# Generate with defaults
+0cmplx generate ./petstore.yaml
+
+# Generate with HTTP transport
+0cmplx generate ./petstore.yaml -o ./my-server --transport http --port 8080
+
+# Re-generate after spec changes
+0cmplx generate ./petstore.yaml -o ./my-server --overwrite
+```
+
+---
+
+## 0cmplx test
+
+Run security traps against an MCP server.
+
+```bash
+0cmplx test [options]
+```
+
+### Options
+
+| Option | Default | Description |
+|---|---|---|
+| `--target`, `-t` | | URL of the running MCP server (HTTP transport) |
+| `--command`, `-c` | | Command to spawn the server (stdio transport) |
+| `--category` | all | Run traps from a specific category: `injection`, `exposure`, `access`, `resource` |
+| `--trap` | all | Run a single named trap (e.g., `injection/sql-fragment`) |
+| `--tools` | all | Comma-separated list of tool names to test |
+| `--format` | `text` | Output format: `text` or `json` |
+| `--output` | stdout | Write results to a file |
+
+### Examples
+
+```bash
+# Test a running HTTP server
+0cmplx test --target http://localhost:3100
+
+# Test a stdio server
+0cmplx test --command "node server.js"
+
+# Test only injection traps
+0cmplx test -t http://localhost:3100 --category injection
+
+# JSON output for CI
+0cmplx test -t http://localhost:3100 --format json --output report.json
+
+# Test specific tools
+0cmplx test -t http://localhost:3100 --tools createPet,deletePet
+```
+
+---
+
+## 0cmplx init
+
+Create a `0cmplx.config.json` file in the current directory.
+
+```bash
+0cmplx init
+```
+
+Generates a minimal configuration file you can customise before running `generate`.
+
+---
+
+## 0cmplx list-traps
+
+List all available security traps.
+
+```bash
+0cmplx list-traps [--category <category>]
+```
+
+Prints the name, category, and description of each trap. Useful for understanding what `0cmplx test` will run.
+
+---
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Success (all tests passed, or generation completed) |
+| `1` | One or more test failures |
+| `2` | Configuration or input error |
+
+Warnings do not cause a non-zero exit code. If you want to fail on warnings, check the JSON report.

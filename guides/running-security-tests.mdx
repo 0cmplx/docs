@@ -1,0 +1,139 @@
+---
+title: Running security tests
+description: Use 0cmplx's OWASP security traps to test your MCP server for vulnerabilities.
+---
+
+0cmplx's `test` command connects to a running MCP server and runs a suite of security traps against it. Each trap simulates a specific attack pattern and reports what it finds.
+
+## Start your server
+
+The traps need a running server to test against. Start it however you normally would:
+
+```bash
+# If using HTTP transport
+node server.js
+# Server running on http://localhost:3100
+```
+
+For stdio servers, 0cmplx can spawn and manage the process:
+
+```bash
+0cmplx test --command "node server.js"
+```
+
+## Run the tests
+
+```bash
+0cmplx test --target http://localhost:3100
+```
+
+0cmplx discovers the server's tools, then runs each applicable trap:
+
+```
+Discovering tools...
+  Found 4 tools: listPets, createPet, getPet, deletePet
+
+Running security traps...
+
+  injection/sql-fragment           PASS
+  injection/shell-command          PASS
+  injection/prompt-in-parameter    PASS
+  exposure/response-fields         WARN  — getPet returns 12 fields, 3 look internal
+  exposure/error-details           PASS
+  access/unauthenticated-call      FAIL  — deletePet accepts calls without auth
+  access/id-enumeration            WARN  — getPet accepts sequential numeric IDs
+  resource/unbounded-list          PASS
+  resource/large-payload           PASS
+
+7 passed, 2 warnings, 1 failure
+```
+
+## Understanding the output
+
+### Failures
+
+A failure means the trap detected behaviour that is likely exploitable. The output includes what was tested and what happened:
+
+```
+FAIL  access/unauthenticated-call
+  Tool: deletePet
+  Expected: error response or authentication challenge
+  Got: 200 OK, pet was deleted
+  Fix: add authentication check to deletePet handler
+```
+
+Failures should be fixed before deploying.
+
+### Warnings
+
+A warning means the trap found something worth looking at, but cannot be certain it is a vulnerability:
+
+```
+WARN  exposure/response-fields
+  Tool: getPet
+  Fields that look internal: _id, createdAt, updatedAt
+  Recommendation: review whether these fields should be in the tool response
+```
+
+You decide whether a warning is relevant. `createdAt` might be useful context for the model. `_id` probably is not.
+
+### Passes
+
+A pass means the trap tried the attack and the server handled it safely. No action needed.
+
+## Running specific traps
+
+You can run a subset of traps:
+
+```bash
+# Run only injection traps
+0cmplx test --target http://localhost:3100 --category injection
+
+# Run a single trap
+0cmplx test --target http://localhost:3100 --trap injection/sql-fragment
+```
+
+## Testing specific tools
+
+If you only want to test certain tools:
+
+```bash
+0cmplx test --target http://localhost:3100 --tools deletePet,createPet
+```
+
+## Output formats
+
+By default, 0cmplx prints results to the terminal. You can also get structured output:
+
+```bash
+# JSON report
+0cmplx test --target http://localhost:3100 --format json --output report.json
+```
+
+The JSON report includes full details for each trap, which is useful for CI pipelines or tracking security status over time.
+
+## Running in CI
+
+Add 0cmplx tests to your CI pipeline to catch regressions:
+
+```yaml
+# GitHub Actions example
+- name: Start MCP server
+  run: node server.js &
+
+- name: Run security tests
+  run: 0cmplx test --target http://localhost:3100 --format json --output report.json
+
+- name: Check for failures
+  run: |
+    if jq -e '.failures | length > 0' report.json > /dev/null; then
+      echo "Security test failures detected"
+      exit 1
+    fi
+```
+
+## Next steps
+
+<Card title="Common vulnerabilities" icon="bug" href="/guides/common-vulnerabilities">
+  Detailed walkthroughs of the most common issues the traps find and how to fix them.
+</Card>

@@ -1,0 +1,17 @@
+{
+  "name": "0cmplx-docs",
+  "description": "Documentation site for 0cmplx",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "dev": "supadocs dev",
+    "build": "supadocs build"
+  },
+  "dependencies": {
+    "@supaproxy/supadocs": "^0.2.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.6.0"
+  }
+}
