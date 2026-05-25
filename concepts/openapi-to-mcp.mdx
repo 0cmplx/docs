@@ -73,7 +73,24 @@ paths:
                 - name
 ```
 
-The tool's input schema will include `name` (required) and `species` (optional) as top-level properties. The AI model fills them in as tool parameters, and 0cmplx's generated handler assembles the request body.
+This becomes:
+
+```json
+{
+  "name": "createPet",
+  "description": "Create a pet",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string" },
+      "species": { "type": "string" }
+    },
+    "required": ["name"]
+  }
+}
+```
+
+The model fills in `name` and `species` as tool parameters. 0cmplx's generated handler assembles the request body and sends `POST /pets` to your API.
 
 ## What gets skipped
 
