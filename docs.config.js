@@ -82,6 +82,12 @@ export default {
         background: var(--sd-bg-code) !important;
         border: 1px solid var(--sd-border-light);
       }
+      .sd-prose .shiki span,
+      .sd-prose .shiki {
+        background-color: transparent !important;
+        --shiki-light-bg: transparent !important;
+        --shiki-dark-bg: transparent !important;
+      }
       code:not(pre code) {
         background: var(--sd-accent-subtle);
         color: var(--sd-accent);
@@ -92,7 +98,10 @@ export default {
         border-color: rgba(255, 255, 255, 0.2);
         text-decoration: none !important;
       }
-      .sd-card, .sd-card * {
+      a[class*="card"],
+      a[class*="card"]:hover,
+      a[class*="card"] *,
+      a[class*="card"]:hover * {
         text-decoration: none !important;
       }
       [data-theme="light"] .sd-card:hover {
