@@ -1,78 +1,34 @@
 ---
-title: 0cmplx vs hosted sandboxes
-description: How 0cmplx Execute compares to provider-managed code execution environments.
+title: Why your own sandbox
+description: Why 0cmplx runs scripts on your infrastructure instead of inside a provider's container.
 ---
 
-Some AI providers offer their own code execution environments. The model writes code, the provider runs it in a container. This is useful for general computation, but it is a different tool solving a different problem.
+Some AI providers offer code execution as a built-in feature. The model writes code, the provider runs it. This is useful for general computation, but 0cmplx takes a different approach for good reasons.
 
-This page compares the two approaches honestly.
+## Credentials stay on your server
 
-## What hosted sandboxes do well
+When a provider runs code on your behalf, tool results pass through their infrastructure. They see the data.
 
-Provider-managed sandboxes (like those offered by major AI platforms) give the model a full Linux environment: Python, bash, disk storage, pre-installed data science libraries. The model can write arbitrary code, create files, generate charts, and process uploaded documents.
+With 0cmplx, the sandbox runs on your server. The bridge calls your API directly. Credentials are injected server-side. The LLM only sees the script's printed output, never the raw API responses.
 
-They are general-purpose compute. If you need the model to do maths, parse a PDF, or create a matplotlib chart, a hosted sandbox is the right tool.
+## Any model, any provider
 
-## Where 0cmplx is different
+Provider sandboxes are tied to one model family. Switch providers and you lose the execution capability.
 
-0cmplx is not general-purpose compute. It is a spec-driven execution layer for API testing and data exploration.
+0cmplx scripts are just text. Any model can write Python. The sandbox does not care which model produced the script.
 
-| | Hosted sandboxes | 0cmplx Execute |
-|---|---|---|
-| **Starting point** | Empty environment. You define tools manually. | Upload an OpenAPI spec, Postman collection, or SQL schema. Functions are generated. |
-| **Purpose** | General computation: data science, file processing, charts | API integration testing, SQL exploration, security validation |
-| **Network access** | None. Fully isolated. Tool calls route back through the provider's API. | Controlled. The bridge calls your API with your credentials. |
-| **LLM provider** | Locked to the provider's models | Any LLM. The script is just text. |
-| **Credentials** | Flow through the provider's infrastructure (via tool result round-trips) | Stay on your server. Never reach the LLM or any third party. |
-| **Data sources** | Files uploaded via the provider's API | Your live API (via spec) or an ephemeral sandbox DB (via schema) |
-| **SQL** | SQLite available as a utility | First-class workflow: upload schema, seed data, read-only mode, query validation |
-| **Security testing** | Not included | OWASP traps test the sandbox boundary for both API and SQL modes |
-| **Onboarding** | Write JSON tool definitions, configure `allowed_callers`, manage containers | `0cmplx execute init --spec ./api.yaml` and you are ready |
-| **Cost** | Provider charges per container hour | Self-hosted. Your compute, your cost model. |
-| **Runtime** | Full Linux container (5GB RAM, 5GB disk, 1 CPU) | Pyodide (Python in WebAssembly). Lighter, faster, no container orchestration. |
-| **Context selection** | All tools sent to the model at once | Relationship-aware: only relevant endpoints/tables surfaced per question |
+## Spec-driven, not manual
 
-## Different problems, different tools
+Provider sandboxes start empty. You define tools manually as JSON schemas with `allowed_callers` configurations.
 
-A hosted sandbox answers: "How do I give the model a computer?"
+0cmplx starts with your API spec or database schema. Functions are generated. Relationship graphs are built. The model sees only what's relevant.
 
-0cmplx answers: "How do I let any model interact with my API and my data safely?"
+## Security testing built in
 
-These are not the same question. A developer might use both. A hosted sandbox for the model to crunch numbers and generate charts. 0cmplx to test API integrations, validate LLM-generated SQL, and run OWASP traps against the boundary.
+Provider sandboxes do not test your tools for vulnerabilities. 0cmplx runs OWASP traps against the sandbox boundary: injection, data exposure, auth bypass, resource exhaustion.
 
-## The credential question
+## When a provider sandbox makes sense
 
-When a hosted sandbox calls your API, the flow is:
+General-purpose computation: data science, file processing, chart generation, complex maths. If the task is about crunching data, not about calling your API, a provider sandbox is the right tool.
 
-1. The model writes code that calls a tool
-2. The provider's sandbox pauses execution
-3. The provider's API returns the tool call to your application
-4. Your application calls your API with credentials
-5. Your application sends the result back to the provider
-6. The provider injects the result into the sandbox
-7. The model's code continues
-
-Your credentials stay in your application, but every tool result passes through the provider's infrastructure. The provider sees the data.
-
-With 0cmplx, the flow is:
-
-1. The LLM writes a script (just text)
-2. 0cmplx runs the script in its sandbox on your server
-3. The bridge calls your API directly, with credentials injected server-side
-4. Results are filtered and returned to the script
-5. The script's output goes back to the LLM
-
-The provider only sees the final summary. Not the raw API responses. Not the intermediate data. Not the credentials. 0cmplx is the boundary.
-
-## When to use which
-
-<CardGroup cols={2}>
-  <Card title="Use a hosted sandbox when" icon="monitor">
-    You need general-purpose computation. Data science, file processing, chart generation, complex maths. You are already using that provider's models and want a seamless experience.
-  </Card>
-  <Card title="Use 0cmplx when" icon="shield">
-    You are testing API integrations. You want any LLM to interact with your API or database. You need credentials to stay on your infrastructure. You want OWASP security traps. You want to upload a spec and start immediately.
-  </Card>
-</CardGroup>
-
-They complement each other. 0cmplx does not replace general-purpose compute, and general-purpose compute does not replace spec-driven API testing.
+0cmplx is for the other case: when the model needs to interact with your API and your data, safely, with observability, and without locking you to a provider.

@@ -187,7 +187,7 @@ export default {
     primaryAction: { label: 'Get Started', href: '/introduction' },
     secondaryAction: { label: 'What is 0cmplx?', href: '/concepts/what-is-0cmplx' },
     cards: [
-      { title: 'MCP', description: 'Generate servers', icon: 'plug', href: '/concepts/openapi-to-mcp' },
+      { title: 'MCP', description: 'Test agents', icon: 'plug', href: '/concepts/what-is-mcp' },
       { title: 'API', description: 'Execute scripts', icon: 'zap', href: '/concepts/programmatic-tools' },
       { title: 'SQL', description: 'Query sandbox', icon: 'database', href: '/concepts/programmatic-tools' },
       { title: 'Security', description: 'OWASP traps', icon: 'shield', href: '/concepts/security-testing' },
@@ -205,12 +205,12 @@ export default {
       pages: [
         'concepts/what-is-0cmplx',
         'concepts/what-is-mcp',
-        'concepts/openapi-to-mcp',
         'concepts/programmatic-tools',
-        'concepts/0cmplx-vs-code-execution',
+        'concepts/query-composition',
+        'concepts/anatomy-of-a-tool',
         'concepts/security-testing',
         'concepts/owasp-for-mcp',
-        'concepts/anatomy-of-a-tool',
+        'concepts/0cmplx-vs-code-execution',
       ],
     },
     {
