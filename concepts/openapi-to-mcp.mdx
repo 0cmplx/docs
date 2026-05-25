@@ -41,11 +41,13 @@ paths:
 
 The `operationId` becomes the tool name. The `summary` becomes the description. Path parameters, query parameters, and request body properties become the input schema.
 
-## Naming matters more than you think
+## Naming and discovery
 
-AI models choose tools based on their names and descriptions. A tool called `get_api_v2_pets_list` is harder for a model to reason about than one called `listPets`. 0cmplx uses the `operationId` when available, and falls back to a generated name derived from the path and method.
+AI models choose tools based on their names and descriptions. 0cmplx uses the `operationId` when available, and falls back to a generated name derived from the path and method. You can override any name in the configuration file.
 
-You can override any name in the configuration file. This is worth doing. A well-named tool gets called correctly more often.
+But naming is only half the problem. An API with 200 endpoints produces 200 tools. Even with perfect names, the model struggles to pick the right one from a flat list.
+
+0cmplx addresses this with [relationship-aware context](/concepts/programmatic-tools#relationship-aware-context). When the model asks a question, 0cmplx traces the relationship graph and surfaces only the relevant cluster of tools. The model sees 5 tools, not 200. Good names on 5 tools is a solved problem.
 
 ## Request bodies
 
