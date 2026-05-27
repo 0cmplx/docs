@@ -1,26 +1,49 @@
 ---
 title: Introduction
-description: Get started with 0cmplx. Test AI agents, generate MCP servers, and execute LLM-written scripts in a secure sandbox.
+description: Connect your database. Get an MCP server. Query in natural language.
 ---
 
-0cmplx is a research and experimental platform for testing AI agents and MCP servers. Connect your agent to mock servers with OWASP security traps, or upload your own API spec and let 0cmplx execute LLM-generated scripts in a sandboxed environment.
+The MCP protocol opened a door. AI models can now discover and call tools in a standardised way. But building an MCP server for every database is tedious. Testing those servers for security is an afterthought. And connecting everything takes longer than it should.
+
+0cmplx fixes this. Connect your database, and the engine turns it into a queryable MCP server, instantly. Your tables become tools. Your relationships become intelligence. Your queries execute in a secure sandbox.
+
+## Try it now
+
+No sign-up required. Pick a sample database and start querying:
+
+```bash
+npm install -g @0cmplx/cli
+0cmplx try banking
+```
+
+Or try from the [dashboard](https://0cmplx.com) with one click.
+
+## Three ways in
+
+<Steps>
+  <Step title="Try with a sample">
+    Pick a pre-built database (banking, ecommerce, healthcare). Explore tables, query in natural language, run security traps. No files, no credentials.
+  </Step>
+  <Step title="Bring your schema">
+    Upload a SQL schema file. The engine parses your tables and relationships. Test with sandbox data before going live.
+  </Step>
+  <Step title="Connect your database">
+    Provide database credentials. Same tools, real data. The schema you tested with stays the same.
+  </Step>
+</Steps>
+
+## How it works
+
+1. **The engine understands your data.** Tables, columns, foreign keys, constraints. It builds a relationship graph.
+2. **Natural language to SQL.** Ask a question. The engine composes the right query, joining across tables automatically.
+3. **Sandboxed execution.** Every query runs in isolation. No access to production data. Safe by default.
+4. **Security testing.** OWASP traps probe any MCP server for injection, data exposure, broken access, and resource exhaustion.
 
 <CardGroup cols={2}>
-  <Card title="Test agents" icon="shield" href="/quickstart">
-    Connect your agent to mock MCP servers with OWASP security traps. See what breaks.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Try a sample database in under a minute.
   </Card>
-  <Card title="Execute scripts" icon="zap" href="/concepts/programmatic-tools">
-    Upload a spec or schema. Ask a question. See what the LLM generates and what happens when it runs.
-  </Card>
-</CardGroup>
-
-## Quick links
-
-<CardGroup cols={2}>
-  <Card title="Quick start" icon="rocket" href="/quickstart">
-    Build your first MCP server in a few minutes.
-  </Card>
-  <Card title="What is 0cmplx?" icon="lightbulb" href="/concepts/what-is-0cmplx">
-    The full story: what we are building, who it is for, and where it is going.
+  <Card title="Install the CLI" icon="terminal" href="/cli/overview">
+    Zero dependencies. One command to get started.
   </Card>
 </CardGroup>

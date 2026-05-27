@@ -1,0 +1,63 @@
+---
+title: Overview
+description: Connect your database and query it from the terminal. Zero dependencies.
+---
+
+## Install
+
+```bash
+npm install -g @0cmplx/cli
+```
+
+## Authenticate
+
+```bash
+0cmplx auth
+```
+
+Paste your API token from [0cmplx.com](https://0cmplx.com) Settings.
+
+## Connect your data
+
+```bash
+0cmplx schema upload schema.sql --name mydb
+```
+
+## Set your context
+
+```bash
+0cmplx use app app_abc123
+```
+
+Now all commands target this app without needing `--app` every time.
+
+## What you can do
+
+| Command | What it does |
+|---|---|
+| `0cmplx schema upload` | Connect a SQL schema |
+| `0cmplx schema list` | List your schemas |
+| `0cmplx schema graph` | View table relationships |
+| `0cmplx app create` | Create a workspace |
+| `0cmplx server list` | Browse MCP servers |
+| `0cmplx server install` | Add a server to your app |
+| `0cmplx exec` | Run a tool |
+| `0cmplx logs` | View execution history |
+| `0cmplx logs --follow` | Stream logs in real time |
+
+Every command supports `--json` for scripting and CI.
+
+<CardGroup cols={2}>
+  <Card title="Authentication" href="/cli/authentication" icon="key">
+    Tokens, credentials, and scopes.
+  </Card>
+  <Card title="Connect data" href="/cli/connect-schema" icon="database">
+    Provide a SQL schema and explore the results.
+  </Card>
+  <Card title="Commands" href="/cli/commands" icon="terminal">
+    Full reference for every command.
+  </Card>
+  <Card title="CI pipelines" href="/cli/ci-pipelines" icon="git-branch">
+    GitHub Actions and automated workflows.
+  </Card>
+</CardGroup>

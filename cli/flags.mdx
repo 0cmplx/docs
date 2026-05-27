@@ -1,0 +1,70 @@
+---
+title: Global flags
+description: Flags available on every command
+---
+
+
+These flags can be passed to any command.
+
+## --help
+
+Show help for the current command.
+
+```bash
+0cmplx --help
+0cmplx schema --help
+0cmplx schema upload --help
+```
+
+## --json
+
+Output results as JSON instead of formatted text. Useful for scripting and CI pipelines.
+
+```bash
+0cmplx schema list --json
+0cmplx app show app_abc123 --json
+```
+
+When `--json` is set:
+- No spinners or progress indicators
+- No colour codes in output
+- Raw JSON on stdout
+- Errors as JSON on stderr
+
+## --no-color
+
+Disable ANSI colour codes in output.
+
+```bash
+0cmplx schema list --no-color
+```
+
+Also triggered by the `NO_COLOR` environment variable:
+
+```bash
+NO_COLOR=1 0cmplx schema list
+```
+
+Colours are automatically disabled when stdout is not a TTY (e.g. when piped).
+
+## --app
+
+Override the active app for this command.
+
+```bash
+0cmplx exec weather get_forecast --param city=London --app app_abc123
+0cmplx logs --app app_abc123
+0cmplx server install weather --app app_abc123
+```
+
+Takes priority over project and global context.
+
+## --schema
+
+Override the active schema for this command.
+
+```bash
+0cmplx schema show --schema sch_abc123
+```
+
+Takes priority over project and global context.

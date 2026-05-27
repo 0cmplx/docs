@@ -1,0 +1,113 @@
+---
+title: Connect via schema
+description: Provide a SQL schema and see your tables, columns, and relationships
+---
+
+
+Providing a SQL schema is the quickest way to connect your data to 0cmplx. The engine parses it into a relationship graph that powers query composition.
+
+In future, you will also be able to connect directly to a live database. The schema file approach is ideal for development, testing, and CI pipelines.
+
+## Upload
+
+```bash
+0cmplx schema upload schema.sql
+```
+
+The `--name` flag overrides the default name (derived from the filename):
+
+```bash
+0cmplx schema upload schema.sql --name insurance-db
+```
+
+## What you see
+
+```
+  ✓ Schema uploaded
+
+  Schema: insurance-db (sch_abc123)
+
+  Coverage
+  ████████████████████░░ 92%
+
+  Tables (12 parsed, 1 skipped)
+  NAME              COLUMNS   RELATIONS
+  users             8         -
+  policies          7         1
+  premiums          6         1
+  claims            6         1
+  accounts          6         1
+  transactions      6         1
+
+  Skipped
+    spatial_ref_sys (PostGIS extension table)
+
+  Next steps
+    0cmplx schema show sch_abc123
+    0cmplx schema graph sch_abc123
+    0cmplx app create
+```
+
+## What the parser extracts
+
+From your SQL DDL, the engine extracts:
+
+- **Tables** with all columns and types
+- **Primary keys** and unique constraints
+- **Foreign keys** (inline `REFERENCES`, table-level `FOREIGN KEY`, and `CONSTRAINT` syntax)
+- **Defaults** and nullable flags
+- **Relationships** between tables via foreign keys
+
+## Lenient parsing
+
+The parser is deliberately lenient. If a table cannot be parsed (unusual syntax, database-specific extensions), it is skipped and reported. The rest of the schema is parsed normally.
+
+This means you can upload a real production schema dump and get useful results even if it contains extensions or vendor-specific SQL.
+
+## Supported SQL syntax
+
+- `CREATE TABLE` with `IF NOT EXISTS`
+- Column types with parameters: `VARCHAR(50)`, `DECIMAL(10,2)`
+- Inline foreign keys: `user_id INTEGER REFERENCES users(id)`
+- Table-level: `FOREIGN KEY (user_id) REFERENCES users(id)`
+- Named constraints: `CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id)`
+- Quoted identifiers: backticks, double quotes, single quotes
+- `PRIMARY KEY`, `NOT NULL`, `UNIQUE`, `DEFAULT` constraints
+
+## View a schema
+
+```bash
+0cmplx schema show sch_abc123
+```
+
+Shows tables with their columns, types, and relationships.
+
+## View the graph
+
+```bash
+0cmplx schema graph sch_abc123
+```
+
+Shows the relationship graph as ASCII edges:
+
+```
+  accounts.user_id --> users.id
+  policies.user_id --> users.id
+  premiums.policy_id --> policies.id
+  claims.policy_id --> policies.id
+  transactions.account_id --> accounts.id
+```
+
+## List all schemas
+
+```bash
+0cmplx schema list
+```
+
+## JSON output
+
+All schema commands support `--json` for scripting:
+
+```bash
+0cmplx schema list --json | jq '.[0].id'
+```

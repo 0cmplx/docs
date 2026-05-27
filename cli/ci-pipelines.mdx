@@ -1,0 +1,80 @@
+---
+title: CI pipelines
+description: Use the CLI in automated workflows
+---
+
+
+Every CLI command supports non-interactive mode and JSON output, making it suitable for CI/CD pipelines.
+
+## JSON output
+
+Pass `--json` to any command to get machine-readable output:
+
+```bash
+0cmplx schema list --json
+0cmplx app show app_abc123 --json
+0cmplx exec weather get_forecast --param city=London --json
+```
+
+When stdout is not a TTY (e.g. piped or in CI), the CLI automatically suppresses spinners and colours.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Success |
+| `1` | Runtime error (API failure, auth error) |
+| `2` | Usage error (missing arguments, unknown command) |
+
+## Example: GitHub Actions
+
+```yaml
+name: Security test
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm install -g @0cmplx/cli
+
+      - name: Authenticate
+        run: echo "${{ secrets.CMPLX_TOKEN }}" | 0cmplx auth
+        env:
+          CMPLX_API_URL: https://api.0cmplx.com
+
+      - name: Upload schema
+        run: |
+          RESULT=$(0cmplx schema upload schema.sql --name ci-test --json)
+          echo "SCHEMA_ID=$(echo $RESULT | jq -r '.id')" >> $GITHUB_ENV
+
+      - name: Create app
+        run: |
+          RESULT=$(0cmplx app create --json)
+          echo "APP_ID=$(echo $RESULT | jq -r '.id')" >> $GITHUB_ENV
+```
+
+## Disabling colours
+
+Colours are automatically disabled when:
+
+- `--no-color` flag is passed
+- `NO_COLOR` environment variable is set
+- stdout is not a TTY
+
+```bash
+NO_COLOR=1 0cmplx schema list
+```
+
+## Environment variables
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `CMPLX_API_URL` | Override API base URL | `https://api.0cmplx.com` |
+| `NO_COLOR` | Disable ANSI colours | unset |

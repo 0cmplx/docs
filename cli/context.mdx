@@ -1,0 +1,71 @@
+---
+title: Context
+description: How the CLI knows which app and schema you are targeting
+---
+
+
+Many commands need to know which app or schema you are working with. Instead of passing `--app app_abc123` on every command, you can set context.
+
+## Resolution order
+
+The CLI resolves context in three layers, highest priority first:
+
+1. **Flags** on the command: `--app app_abc123`
+2. **Project context**: `.0cmplx/context.json` in the current directory (or any parent)
+3. **Global context**: `~/.0cmplx/context.json`
+
+## Project context
+
+Ideal for repositories where the team shares the same app configuration.
+
+```bash
+0cmplx init
+```
+
+This creates `.0cmplx/context.json` in the current directory:
+
+```json
+{
+  "app": "app_abc123",
+  "schema": "sch_def456"
+}
+```
+
+The CLI walks up the directory tree to find this file, just like Git finds `.git`. You can place it at the root of your project and it works from any subdirectory.
+
+Add `.0cmplx/` to your `.gitignore` if the context contains user-specific IDs.
+
+## Global context
+
+For personal defaults that apply everywhere.
+
+```bash
+0cmplx use app app_abc123
+0cmplx use schema sch_def456
+```
+
+This writes to `~/.0cmplx/context.json`. Useful when you are working across multiple projects with the same app.
+
+## Viewing context
+
+```bash
+0cmplx context
+```
+
+Shows the resolved context with the source:
+
+```
+  App:     app_abc123  (project)
+  Schema:  sch_def456  (global)
+```
+
+## When no context is set
+
+Commands that require an app will show a helpful message:
+
+```
+  No app selected. Set one with:
+    0cmplx use app <id>
+    0cmplx init
+    --app <id>
+```

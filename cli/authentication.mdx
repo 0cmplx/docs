@@ -1,0 +1,97 @@
+---
+title: Authentication
+description: Authenticate the CLI with your 0cmplx account
+---
+
+
+The CLI authenticates using API tokens generated from the 0cmplx dashboard.
+
+## Generate a token
+
+1. Sign in at [0cmplx.com](https://0cmplx.com)
+2. Open **Settings**
+3. Under **API tokens**, click **Generate new token**
+4. Name your token (e.g. "My CLI") and select the scopes you need
+5. Copy the token. It starts with `0cx_` and is only shown once.
+
+## Log in
+
+```bash
+0cmplx auth
+```
+
+Paste your token when prompted. The input is hidden for security.
+
+```
+  Paste your API token below.
+  Generate one at: Settings > Programmatic Access
+
+  Token: ████████████████
+
+  ✓ Authenticated as elvis (pro)
+  Scopes: sandbox:create, sandbox:read, sandbox:execute
+```
+
+## Check status
+
+```bash
+0cmplx auth status
+```
+
+```
+  User:   elvis
+  Tier:   pro
+  Scopes: sandbox:create, sandbox:read, sandbox:execute
+  Since:  2026-05-27T10:00:00.000Z
+```
+
+## Log out
+
+```bash
+0cmplx auth logout
+```
+
+This clears the local credentials and notifies the server.
+
+## Where credentials are stored
+
+The CLI uses your operating system's native credential store. Your token never touches the filesystem as plaintext.
+
+| Platform | Storage |
+|---|---|
+| macOS | Keychain (via `security` framework) |
+| Linux | GNOME Keyring (via `secret-tool`) |
+| Fallback | Encrypted file (`~/.0cmplx/credentials.enc`) |
+
+The `auth status` command shows which backend is active:
+
+```
+  ● elvis
+  Tier:    pro
+  Scopes:  sandbox:create, sandbox:read
+  Storage: macOS Keychain
+```
+
+If you have an existing plaintext `credentials.json` from an older version, the CLI migrates it to the secure backend automatically and deletes the plaintext file.
+
+## Token scopes
+
+| Scope | Permission |
+|---|---|
+| `sandbox:create` | Create sandboxes and apps |
+| `sandbox:read` | Read sandbox data |
+| `sandbox:execute` | Execute scripts and tools |
+| `server:create` | Create custom servers |
+| `server:edit` | Edit server configurations |
+| `server:delete` | Delete servers |
+| `test:run` | Run security tests |
+
+## CI/CD usage
+
+For CI pipelines, set the token as an environment variable and authenticate non-interactively:
+
+```bash
+export CMPLX_TOKEN=0cx_your_token_here
+```
+
+Or pass it directly (the CLI reads from stored credentials, so authenticate once in your pipeline setup step).

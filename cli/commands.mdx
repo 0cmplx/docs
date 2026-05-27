@@ -1,0 +1,262 @@
+---
+title: Commands
+description: Complete reference for every CLI command
+---
+
+
+## auth
+
+Manage authentication.
+
+### auth login
+
+Authenticate with an API token. Prompts for hidden input.
+
+```bash
+0cmplx auth
+0cmplx auth login
+```
+
+### auth status
+
+Show current authentication state.
+
+```bash
+0cmplx auth status
+0cmplx auth status --json
+```
+
+### auth logout
+
+Clear stored credentials and notify the server.
+
+```bash
+0cmplx auth logout
+```
+
+---
+
+## schema
+
+Manage database schemas.
+
+### schema upload
+
+Upload and parse a SQL schema file.
+
+```bash
+0cmplx schema upload <file.sql> [--name <name>]
+```
+
+| Flag | Description | Default |
+|---|---|---|
+| `--name` | Schema name | Filename without extension |
+
+### schema list
+
+List all uploaded schemas.
+
+```bash
+0cmplx schema list [--json]
+```
+
+### schema show
+
+Show schema details including tables, columns, and relationships.
+
+```bash
+0cmplx schema show <schema_id> [--json]
+```
+
+### schema graph
+
+Show the relationship graph.
+
+```bash
+0cmplx schema graph <schema_id> [--json]
+```
+
+---
+
+## app
+
+Manage apps (workspaces).
+
+### app create
+
+Create a new app.
+
+```bash
+0cmplx app create [--json]
+```
+
+### app show
+
+Show app details.
+
+```bash
+0cmplx app show <app_id> [--json]
+```
+
+---
+
+## server
+
+Browse and manage MCP servers.
+
+### server list
+
+List available servers in the catalogue.
+
+```bash
+0cmplx server list [--search <query>] [--category <category>] [--json]
+```
+
+| Flag | Description |
+|---|---|
+| `--search` | Filter by name or description |
+| `--category` | Filter by category: `utility`, `data`, `security` |
+
+### server show
+
+Show server details including tools.
+
+```bash
+0cmplx server show <server_id> [--json]
+```
+
+### server install
+
+Install a server into the active app.
+
+```bash
+0cmplx server install <server_id> [--app <app_id>]
+```
+
+### server uninstall
+
+Uninstall a server from the active app.
+
+```bash
+0cmplx server uninstall <server_id> [--app <app_id>]
+```
+
+---
+
+## exec
+
+Execute a tool on a server.
+
+```bash
+0cmplx exec <server_id> <tool_name> [--param key=value ...] [--app <app_id>] [--json]
+```
+
+| Flag | Description |
+|---|---|
+| `--param` | Tool parameter as `key=value`. Repeatable. |
+| `--app` | Override active app |
+
+---
+
+## logs
+
+View execution logs.
+
+### logs (default)
+
+Show log history for the active app.
+
+```bash
+0cmplx logs [--type <type>] [--app <app_id>] [--json]
+```
+
+| Flag | Description |
+|---|---|
+| `--type` | Filter: `request`, `response`, `error`, `system` |
+| `--follow`, `-f` | Stream logs in real time via SSE |
+
+### logs clear
+
+Clear all logs for the active app.
+
+```bash
+0cmplx logs clear [--app <app_id>]
+```
+
+---
+
+## context
+
+Manage app and schema targeting.
+
+### context (default)
+
+Show resolved context with sources.
+
+```bash
+0cmplx context
+```
+
+### context init
+
+Create a project-level context file (`.0cmplx/context.json`).
+
+```bash
+0cmplx context init [--app <app_id>] [--schema <schema_id>]
+```
+
+### context use
+
+Set global context.
+
+```bash
+0cmplx use app <app_id>
+0cmplx use schema <schema_id>
+```
+
+---
+
+## help
+
+Show help for a specific command.
+
+```bash
+0cmplx help
+0cmplx help schema
+0cmplx help schema upload
+```
+
+---
+
+## Global flags
+
+These flags work on every command.
+
+| Flag | Description |
+|---|---|
+| `--help` | Show help |
+| `--json` | Output as JSON (for scripting and CI) |
+| `--no-color` | Disable ANSI colours |
+| `--app <id>` | Override active app |
+| `--schema <id>` | Override active schema |
+
+Colours are automatically disabled when stdout is not a TTY or when the `NO_COLOR` environment variable is set.
+
+---
+
+## Environment variables
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `CMPLX_API_URL` | Override API base URL | `https://api.0cmplx.com` |
+| `NO_COLOR` | Disable colours | unset |
+
+---
+
+## Files
+
+| Path | Purpose |
+|---|---|
+| `~/.0cmplx/credentials.json` | API token and user info |
+| `~/.0cmplx/context.json` | Global active app and schema |
+| `.0cmplx/context.json` | Project-level context |

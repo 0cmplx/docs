@@ -115,93 +115,7 @@ export default {
         scrollbar-color: var(--sd-border) transparent;
       }
 
-      /* Landing: replace headline text with capsule logo */
-      .sd-landing-title {
-        font-size: 0 !important;
-        color: transparent !important;
-        line-height: 0 !important;
-        margin-bottom: 24px !important;
-      }
-      .sd-landing-title::before {
-        content: '';
-        display: block;
-        width: 56px;
-        height: 56px;
-        margin: 0 auto 16px;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cg transform='rotate(90 256 256)'%3E%3Cpath fill='%23808080' d='M256 512c-96.495 0-175-78.505-175-175V175C81 78.505 159.505 0 256 0s175 78.505 175 175v162c0 96.495-78.505 175-175 175zm0-422c-46.869 0-85 38.131-85 85v162c0 46.869 38.131 85 85 85s85-38.131 85-85V175c0-46.869-38.131-85-85-85z'/%3E%3Cpath fill='%23505050' d='M256 0v90c46.869 0 85 38.131 85 85v162c0 46.869-38.131 85-85 85v90c96.495 0 175-78.505 175-175V175C431 78.505 352.495 0 256 0z'/%3E%3C/g%3E%3C/svg%3E");
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center;
-      }
-
-      /* Landing cards */
-      .sd-landing-cards {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 10px !important;
-        max-width: 600px !important;
-        margin: 0 auto !important;
-      }
-      .sd-landing-card:last-child {
-        grid-column: 1 / -1;
-        border: none !important;
-        background: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        margin-top: 40px !important;
-        justify-content: center;
-      }
-      .sd-landing-card:last-child .sd-landing-card-icon {
-        display: none !important;
-      }
-      .sd-landing-card:last-child .sd-landing-card-title {
-        font-size: 12px !important;
-        font-weight: 500 !important;
-        color: var(--sd-text-muted) !important;
-      }
-      .sd-landing-card:last-child .sd-landing-card-desc {
-        display: none !important;
-      }
-      .sd-landing-card:last-child:hover {
-        background: none !important;
-        transform: none !important;
-        border-color: transparent !important;
-      }
-      .sd-landing-card:last-child .sd-landing-card-title:hover {
-        color: var(--sd-accent) !important;
-      }
-      .sd-landing-card {
-        text-align: center !important;
-        align-items: center !important;
-        padding: 16px 12px !important;
-      }
-      .sd-landing-card-title {
-        font-size: 13px !important;
-      }
-      .sd-landing-card-desc {
-        font-size: 11px !important;
-        opacity: 0.7 !important;
-      }
-      @media (max-width: 600px) {
-        .sd-landing-cards {
-          grid-template-columns: repeat(2, 1fr) !important;
-        }
-      }
     `,
-  },
-
-  landing: {
-    headline: '0cmplx',
-    description: 'Upload your API spec or database schema. Generate MCP servers or execute LLM-written scripts in a secure sandbox. Any LLM. OWASP traps included.',
-    primaryAction: { label: 'Get Started', href: '/introduction' },
-    secondaryAction: { label: 'What is 0cmplx?', href: '/concepts/what-is-0cmplx' },
-    cards: [
-      { title: 'MCP', description: 'Test agents', icon: 'plug', href: '/concepts/what-is-mcp' },
-      { title: 'API', description: 'Execute scripts', icon: 'zap', href: '/concepts/programmatic-tools' },
-      { title: 'SQL', description: 'Query sandbox', icon: 'database', href: '/concepts/programmatic-tools' },
-      { title: 'Security', description: 'OWASP traps', icon: 'shield', href: '/concepts/security-testing' },
-      { title: '0cmplx vs hosted sandboxes \u2192', description: '', href: '/concepts/0cmplx-vs-code-execution' },
-    ],
   },
 
   navigation: [
@@ -213,31 +127,34 @@ export default {
       group: 'Concepts',
       pages: [
         'concepts/what-is-0cmplx',
-        'concepts/what-is-mcp',
-        'concepts/programmatic-tools',
         'concepts/query-composition',
-        'concepts/anatomy-of-a-tool',
+        'concepts/sandbox',
         'concepts/security-testing',
-        'concepts/owasp-for-mcp',
-        'concepts/0cmplx-vs-code-execution',
       ],
     },
     {
       group: 'Guides',
       pages: [
-        'guides/your-first-mcp',
-        'guides/from-openapi-spec',
         'guides/running-security-tests',
-        'guides/common-vulnerabilities',
         'guides/going-to-production',
+      ],
+    },
+    {
+      group: 'CLI',
+      pages: [
+        'cli/overview',
+        'cli/authentication',
+        'cli/connect-schema',
+        'cli/context',
+        'cli/managing-apps',
+        'cli/executing-tools',
+        'cli/commands',
+        'cli/ci-pipelines',
       ],
     },
     {
       group: 'Reference',
       pages: [
-        'reference/cli',
-        'reference/configuration',
-        'reference/sandbox',
         'reference/security-traps',
       ],
     },
@@ -245,8 +162,9 @@ export default {
 
   tabs: [
     { label: 'Documentation', href: '/introduction' },
-    { label: 'Guides', href: '/guides/your-first-mcp' },
-    { label: 'Reference', href: '/reference/cli' },
+    { label: 'Guides', href: '/guides/running-security-tests' },
+    { label: 'CLI', href: '/cli/overview' },
+    { label: 'Reference', href: '/reference/security-traps' },
   ],
 
   links: [],

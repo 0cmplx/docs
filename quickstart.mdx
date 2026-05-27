@@ -1,67 +1,83 @@
 ---
-title: Quick start
-description: Connect your AI agent to mock MCP servers and test it against OWASP security traps.
+title: Quickstart
+description: Try 0cmplx in under a minute. No sign-up required.
 ---
 
-0cmplx runs in your browser. No installation. No signup required.
+## Option 1: Try a sample (fastest)
 
-## Start a session
+No files. No credentials. Pick a pre-built database and start exploring.
 
-Go to [0cmplx.com](https://0cmplx.com) and click **Start testing**. A session is created with three mock plugins pre-installed:
+### From the CLI
 
-- **Weather API** (utility): forecast, current conditions, alerts
-- **SQL Database** (data): users, orders, products with real CRUD operations
-- **Prompt Injection** (security): OWASP LLM01 attack patterns
-
-Each plugin is a fully functional MCP server your agent can connect to.
-
-## Connect your agent
-
-In the dashboard, select a plugin and click the **Connection** widget. You will see an MCP endpoint URL:
-
-```
-https://mcp-ses_abc123.0cmplx.com/weather
+```bash
+npm install -g @0cmplx/cli
+0cmplx try banking
 ```
 
-Add this URL to your MCP client configuration (Claude Desktop, Cursor, or any MCP-compatible agent). The agent connects and discovers the available tools automatically.
+This loads a banking database with users, accounts, policies, premiums, and claims. You can query it immediately.
 
-## Execute a tool
+### From the dashboard
 
-You can also test tools directly from the dashboard without an external agent. Select a tool, fill in the parameters, and click **Execute**. The request and response appear in the log panel in real-time.
+Go to [0cmplx.com](https://0cmplx.com) and click **Start testing**. An app is created with demo servers pre-installed. Select a server, pick a tool, and execute.
 
-Every tool call is logged: what was called, with what parameters, what came back, and how long it took.
+### Available samples
 
-## Check security results
+| Sample | Tables | What it covers |
+|---|---|---|
+| `banking` | users, accounts, policies, premiums, claims, transactions | Financial data, multi-table joins, user lookups |
+| `ecommerce` | users, products, orders, order_items, reviews, categories | Product catalogues, order history, aggregations |
+| `healthcare` | patients, doctors, appointments, prescriptions, diagnoses | Patient records, scheduling, medical data |
 
-If you are using a security plugin (Prompt Injection, Tool Poisoning, Excessive Agency, Data Exfiltration), the dashboard tracks your agent's behaviour:
+## Option 2: Bring your schema
 
-- **Injections caught vs missed**: did your agent detect the hidden instructions?
-- **Privilege escalations**: did your agent call destructive tools without confirmation?
-- **Data leaked**: did your agent expose conversation data to the tool?
+Upload your own SQL schema file. The engine parses it and builds tools from your tables.
 
-The security and performance widgets update in real-time as your agent interacts with the mock servers.
+```bash
+0cmplx auth
+0cmplx schema upload schema.sql --name mydb
+```
 
-## Add more plugins
+```
+  ✓ Schema uploaded
 
-Click the **Plugins** icon (⊞) in the left sidebar to browse all available plugins. Install the ones you want to test against. Each plugin has its own set of tools, probes, and attack patterns.
+  Schema: mydb (sch_abc123)
 
-## Sign in for more
+  Coverage
+  ████████████████████████ 100%
 
-Click **Sign in with GitHub** to unlock pro features: longer sessions, 0cmplx Execute (API and SQL modes), and audit trails.
+  Tables (6 parsed, 0 skipped)
+  NAME              COLUMNS   RELATIONS
+  users             5         -
+  accounts          4         1
+  policies          7         1
+  premiums          6         1
+  claims            6         1
+  transactions      6         1
+```
 
-## Next steps
+## Option 3: Connect your database
+
+When you are ready for production, provide database credentials. Same schema, same tools, real data.
+
+```bash
+0cmplx connect --host db.example.com --port 5432 --name mydb
+```
+
+Start with a sample or schema file. Connect credentials when you are confident in the setup.
+
+## What next
 
 <CardGroup cols={2}>
   <Card title="What is 0cmplx?" icon="lightbulb" href="/concepts/what-is-0cmplx">
-    The full story: what we are building and where it is going.
+    The full story.
   </Card>
-  <Card title="0cmplx Execute" icon="zap" href="/concepts/programmatic-tools">
-    Upload your own spec or schema. The LLM scripts, 0cmplx runs.
+  <Card title="Query composition" icon="database" href="/concepts/query-composition">
+    How natural language becomes SQL.
   </Card>
   <Card title="Security testing" icon="shield" href="/concepts/security-testing">
-    How the OWASP traps work and what they test.
+    OWASP traps for MCP servers.
   </Card>
-  <Card title="What is MCP?" icon="book-open" href="/concepts/what-is-mcp">
-    The protocol that connects AI agents to tools.
+  <Card title="CLI reference" icon="terminal" href="/cli/overview">
+    Every command at a glance.
   </Card>
 </CardGroup>

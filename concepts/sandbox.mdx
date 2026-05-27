@@ -1,0 +1,35 @@
+---
+title: Sandbox
+description: How 0cmplx executes queries safely in an isolated environment.
+---
+
+Every query in 0cmplx runs inside a Pyodide sandbox. This is not a container or a VM. It is a WebAssembly-based Python runtime that executes in isolation, with no access to the host filesystem, network, or other processes.
+
+## Why a sandbox
+
+The engine composes SQL from natural language. That SQL needs to run somewhere safe.
+
+- **No production access.** The sandbox uses an ephemeral database seeded from your schema. Your real data is never touched.
+- **Isolated per app.** Each app gets its own sandbox. One app cannot see another's data.
+- **Automatic cleanup.** When the app expires, the sandbox and all its data are deleted.
+- **Observable.** Every query is logged: what ran, how long it took, what came back.
+
+## Any model, any provider
+
+The sandbox does not care which model composed the query. Claude, GPT, Gemini, or a custom model. The engine receives natural language, composes SQL, and executes it. The model only sees the structured result.
+
+## Credentials stay with you
+
+When a provider offers built-in code execution, your data passes through their infrastructure. With 0cmplx, the sandbox runs on the 0cmplx cloud. Credentials are injected server-side. The model never sees raw database responses, only the processed output.
+
+## What runs in the sandbox
+
+- SQL queries composed by the engine from natural language
+- Aggregations and joins across related tables
+- Data transformations before returning results
+
+## What does not run in the sandbox
+
+- Arbitrary user code (the engine composes the queries, not the user)
+- Network requests (the sandbox has no outbound access)
+- File system operations (WebAssembly isolation prevents this)
