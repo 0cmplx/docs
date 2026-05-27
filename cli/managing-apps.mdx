@@ -1,0 +1,62 @@
+---
+title: Managing apps
+description: Create and manage apps for testing
+---
+
+
+An app is a workspace where you install servers and execute tools. Think of it as an isolated testing environment.
+
+## Create an app
+
+```bash
+0cmplx app create
+```
+
+```
+  ✓ App created
+
+  ID:       app_abc123
+  Created:  just now
+  Servers:  0
+
+  Set as active: 0cmplx use app app_abc123
+```
+
+## Set as active context
+
+After creating an app, set it as your active context so you do not need to pass `--app` on every command:
+
+```bash
+0cmplx use app app_abc123
+```
+
+Or for project-level context:
+
+```bash
+0cmplx init
+```
+
+## View an app
+
+```bash
+0cmplx app show app_abc123
+```
+
+## Install servers
+
+With an active app, install servers to start testing:
+
+```bash
+0cmplx server install weather
+0cmplx server install database
+```
+
+## App lifecycle
+
+Apps are ephemeral. They expire after a configurable TTL (typically 24 hours). When an app expires:
+
+- All sandbox data is deleted
+- All logs are cleared
+- Installed servers are released
+
+Create a new app when you need a fresh environment. This keeps resources clean and prevents stale state.

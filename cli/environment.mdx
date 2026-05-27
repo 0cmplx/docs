@@ -1,0 +1,48 @@
+---
+title: Environment variables
+description: Environment variables that configure the CLI
+---
+
+
+## CMPLX_API_URL
+
+Override the API base URL. Defaults to `https://api.0cmplx.com`.
+
+```bash
+CMPLX_API_URL=http://localhost:3002 0cmplx schema list
+```
+
+Useful for local development or pointing to a staging environment.
+
+## NO_COLOR
+
+Disable ANSI colour codes. Any non-empty value triggers this.
+
+```bash
+NO_COLOR=1 0cmplx schema list
+```
+
+This follows the [no-color.org](https://no-color.org) convention. Equivalent to passing `--no-color`.
+
+## Automatic detection
+
+The CLI automatically adjusts behaviour based on the environment:
+
+| Condition | Effect |
+|---|---|
+| stdout is not a TTY | Colours disabled, spinners disabled |
+| `NO_COLOR` is set | Colours disabled |
+| `CI` is set | Treated as non-interactive |
+| `--json` flag | Raw JSON output, no formatting |
+
+## Credential storage
+
+Credentials are always stored in `~/.0cmplx/credentials.json`. This path is not configurable. The directory is determined by `os.homedir()` in Node.js.
+
+## Paths
+
+| Path | Purpose |
+|---|---|
+| `~/.0cmplx/credentials.json` | API token and user info |
+| `~/.0cmplx/context.json` | Global active app and schema |
+| `.0cmplx/context.json` | Project-level context (in current or parent directory) |

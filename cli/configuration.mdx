@@ -1,0 +1,70 @@
+---
+title: Configuration
+description: Configuration files and their locations
+---
+
+
+The CLI stores configuration in two locations.
+
+## User configuration
+
+All user-level files live in `~/.0cmplx/`:
+
+| File | Purpose | Permissions |
+|---|---|---|
+| `credentials.json` | API token and user info | `0600` |
+| `context.json` | Global active app and schema | default |
+
+### credentials.json
+
+Created by `0cmplx auth`. Contains:
+
+```json
+{
+  "token": "0cx_...",
+  "login": "elvis",
+  "tier": "pro",
+  "scopes": ["sandbox:create", "sandbox:read", "sandbox:execute"],
+  "savedAt": "2026-05-27T10:00:00.000Z"
+}
+```
+
+The directory is created with permissions `0700` (owner only) and the file with `0600`.
+
+### context.json
+
+Created by `0cmplx use app` or `0cmplx use schema`. Contains:
+
+```json
+{
+  "activeApp": "app_abc123",
+  "activeSchema": "sch_def456"
+}
+```
+
+## Project configuration
+
+Project-level context lives in `.0cmplx/context.json` within your project directory.
+
+Created by `0cmplx init` or `0cmplx context init`.
+
+```json
+{
+  "app": "app_abc123",
+  "schema": "sch_def456"
+}
+```
+
+The CLI walks up the directory tree to find this file, similar to how Git finds `.git`. Place it at your project root.
+
+### Should you commit it?
+
+If the app and schema IDs are shared across the team, commit it. If they are user-specific, add `.0cmplx/` to `.gitignore`.
+
+## Resolution order
+
+When the CLI needs an app or schema ID, it checks:
+
+1. `--app` / `--schema` flags (highest priority)
+2. `.0cmplx/context.json` in the current or parent directory
+3. `~/.0cmplx/context.json` (lowest priority)

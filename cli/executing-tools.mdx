@@ -1,0 +1,84 @@
+---
+title: Executing tools
+description: Execute MCP tools from the command line
+---
+
+
+Once you have an app with installed servers, you can execute tools directly from the terminal.
+
+## Basic execution
+
+```bash
+0cmplx exec weather get_forecast --param city=London
+```
+
+```
+  ✓ get_forecast completed in 142ms
+
+  ID:       abc123
+  Status:   success
+  Duration: 142ms
+
+  Response
+  {
+    "city": "London",
+    "forecast": [
+      { "day": "Monday", "temp": 18, "conditions": "Partly cloudy" },
+      { "day": "Tuesday", "temp": 21, "conditions": "Sunny" }
+    ]
+  }
+```
+
+## Multiple parameters
+
+```bash
+0cmplx exec database query \
+  --param sql="SELECT * FROM users WHERE status = 'active'" \
+  --param limit=10
+```
+
+## Targeting a specific app
+
+If you have not set active context, pass the app explicitly:
+
+```bash
+0cmplx exec weather get_forecast --param city=London --app app_abc123
+```
+
+## Viewing logs
+
+After executing tools, view the log history:
+
+```bash
+0cmplx logs
+```
+
+```
+  ID       TYPE      TOOL           STATUS   DURATION   WHEN
+  abc123   request   get_forecast   success  142ms      2m ago
+  def456   request   query          success  89ms       5m ago
+```
+
+## Streaming logs
+
+Watch logs in real time as tools are executed (useful when another client is calling the same app):
+
+```bash
+0cmplx logs --follow
+```
+
+## Clearing logs
+
+```bash
+0cmplx logs clear
+```
+
+## JSON output
+
+For scripting and CI pipelines:
+
+```bash
+0cmplx exec weather get_forecast --param city=London --json
+```
+
+Returns raw JSON on stdout with exit code 0 for success, 1 for errors.

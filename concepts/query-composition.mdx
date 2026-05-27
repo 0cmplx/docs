@@ -1,190 +1,76 @@
 ---
 title: Query composition
-description: How programmatic tool calling turns a simple filter DSL into a powerful query engine.
+description: How the engine composes SQL from natural language using your schema's relationship graph.
 ---
 
-The difference between a model guessing parameters and a model writing code that builds parameters is enormous. This page shows why, using a progressively harder set of examples.
+The engine does not expose CRUD tools for each table. It exposes a query interface. You ask a question in natural language. The engine composes the SQL.
 
-## The problem
+## Why composition matters
 
-An API has a filter DSL. The model needs to use it. Without programmatic calling, the model constructs the entire filter as a static JSON argument in one shot. It guesses field paths, enum values, and IDs. If any guess is wrong, the call returns nothing and the model retries blind.
+A typical database has dozens of tables with foreign key relationships. To answer "What is the premium for the user with phone +2781?", a CRUD approach needs three tool calls: look up the user, find their policy, fetch the premium. Three round trips. Three LLM reasoning steps.
 
-With 0cmplx Execute, the model writes a script. The script resolves lookups, validates enums, computes dates, composes filter trees, and only then submits the query. Intermediate results stay in the sandbox. The model sees the final answer.
+The engine does it in one. It knows the relationship graph:
 
-## Level 1: flat parameters, single call
+```
+users.phone → users.id
+policies.user_id → users.id
+premiums.policy_id → policies.id
+```
 
-The simplest approach. Each filter is its own query parameter.
+It composes:
+
+```sql
+SELECT p.amount, p.month
+FROM premiums p
+JOIN policies pol ON p.policy_id = pol.id
+JOIN users u ON pol.user_id = u.id
+WHERE u.phone = '+2781...'
+AND p.month = '2026-05'
+```
+
+One tool call. One result.
+
+## The relationship graph
+
+When you connect your data, the engine extracts:
+
+- **Tables** with columns and types
+- **Foreign keys** (inline, table-level, and named constraints)
+- **Unique constraints** for natural lookups (phone, email, account number)
+- **Defaults and nullability** for understanding optional fields
+
+This becomes a graph where nodes are tables and edges are foreign key relationships. The engine traverses this graph to compose joins.
+
+## Confidence scoring
+
+The engine scores how well a question maps to the schema:
+
+**High confidence** (executes immediately):
+- All terms resolve to known tables and columns
+- Relationships exist to join the required data
+- Example: "Get status for user with phone +2781..."
+
+**Low confidence** (returns clarification):
+- Ambiguous terms that match multiple columns
+- References to data that does not exist in the schema
+- Unclear operations ("adjusted", "normalised", "weighted")
 
 ```json
 {
-  "tool": "searchCollections",
-  "arguments": {
-    "status": "overdue",
-    "client_tier": "premium",
-    "client_region": "GP",
-    "policy_issued_after": "2025-11-25"
-  }
+  "status": "needs_clarification",
+  "confidence": 0.34,
+  "resolved": ["users.phone", "accounts.balance"],
+  "unresolved": ["loyalty tier - no matching column"]
 }
 ```
 
-This only works because the API has exactly these parameters. Every new question needs new parameters on the server. The model also had to know that "GP" is the code for Gauteng, which it probably guessed.
+The caller has the domain knowledge to rephrase. The engine has the schema knowledge to execute. Neither guesses.
 
-## Level 2: filter DSL, single call
+## Sandbox execution
 
-More expressive. A structured filter object with operators.
+Every query runs in a Pyodide sandbox with an ephemeral database:
 
-```json
-{
-  "tool": "searchCollections",
-  "arguments": {
-    "filter": {
-      "and": [
-        { "field": "status", "op": "eq", "value": "overdue" },
-        { "field": "client.tier", "op": "eq", "value": "premium" },
-        { "field": "client.region.code", "op": "eq", "value": "GP" },
-        { "field": "policy.issued_at", "op": "gte", "value": "2025-11-25" }
-      ]
-    },
-    "limit": 100
-  }
-}
-```
-
-Better, but still one shot. The model is guessing field paths (`client.region.code`?) and enum values (`GP`? `premium`?). If any guess is wrong, the call returns nothing.
-
-## Level 3: programmatic calling
-
-The model writes a script. Everything changes.
-
-```python
-# Resolve the region by name, not by guessed code
-regions = await listRegions(
-    filter={"field": "name", "op": "eq", "value": "Gauteng"}
-)
-gauteng_id = regions[0]["id"]
-
-# Confirm the tier enum actually exists
-tiers = await listEnumValues(field="client.tier")
-assert "premium" in tiers, f"'premium' not found; got {tiers}"
-
-# Compute the date in code, not in the prompt
-from datetime import date, timedelta
-six_months_ago = (date.today() - timedelta(days=183)).isoformat()
-
-# Build and submit the filter
-result = await searchCollections(
-    filter={
-        "and": [
-            {"field": "status", "op": "eq", "value": "overdue"},
-            {"field": "client.tier", "op": "eq", "value": "premium"},
-            {"field": "client.region_id", "op": "eq", "value": gauteng_id},
-            {"field": "policy.issued_at", "op": "gte", "value": six_months_ago},
-        ]
-    },
-    limit=500,
-)
-
-# Summarise without dragging 500 rows through the model's context
-print(f"Count: {len(result)}")
-print(f"Total outstanding: {sum(r['amount'] for r in result)}")
-```
-
-The model resolves "Gauteng" to an ID. It validates the enum. It computes the date. It builds the filter with correct field paths. It aggregates in the sandbox. The 500 rows never enter the model's context.
-
-## Multi-step composition
-
-A harder question: "For each product line, find the top three clients by total premium written this year, then check which of them have any overdue collections."
-
-Without programmatic calling, this is a mess: N tool calls with IDs round-tripping through the model's context, manual tracking of which client belongs to which product line.
-
-With 0cmplx Execute:
-
-```python
-product_lines = await listProductLines()
-report = []
-
-for line in product_lines:
-    policies = await searchPolicies(
-        filter={
-            "and": [
-                {"field": "product_code", "op": "eq", "value": line["code"]},
-                {"field": "issued_at", "op": "gte", "value": "2026-01-01"},
-            ]
-        },
-        limit=10000,
-    )
-
-    # Aggregation in the sandbox, not via a bespoke server endpoint
-    totals = {}
-    for p in policies:
-        totals[p["client_id"]] = totals.get(p["client_id"], 0) + p["premium"]
-
-    top_three = sorted(totals.items(), key=lambda x: -x[1])[:3]
-    top_ids = [cid for cid, _ in top_three]
-
-    overdue = await searchCollections(
-        filter={
-            "and": [
-                {"field": "client_id", "op": "in", "value": top_ids},
-                {"field": "status", "op": "eq", "value": "overdue"},
-            ]
-        }
-    )
-    overdue_clients = {c["client_id"] for c in overdue}
-
-    report.append({
-        "product": line["name"],
-        "top_clients": [
-            {"client_id": cid, "premium": total, "has_overdue": cid in overdue_clients}
-            for cid, total in top_three
-        ],
-    })
-
-print(report)
-```
-
-The model writes this once. The sandbox runs it. The aggregation never needed to exist as a server endpoint.
-
-## Recursive filter trees
-
-"Show me policies that match any of these risk patterns: (high-value AND no recent claims) OR (multiple dependants AND in a flood-prone region)."
-
-```python
-flood_regions = await listRegions(
-    filter={"field": "risk_flags", "op": "contains", "value": "flood"}
-)
-flood_region_ids = [r["id"] for r in flood_regions]
-
-risk_filter = {
-    "or": [
-        {
-            "and": [
-                {"field": "sum_insured", "op": "gte", "value": 5_000_000},
-                {"field": "last_claim_at", "op": "lt", "value": "2024-05-25"},
-            ]
-        },
-        {
-            "and": [
-                {"field": "dependants_count", "op": "gte", "value": 3},
-                {"field": "client.region_id", "op": "in", "value": flood_region_ids},
-            ]
-        },
-    ]
-}
-
-result = await searchPolicies(filter=risk_filter, limit=200)
-print(f"Matching policies: {len(result)}")
-```
-
-The `flood_region_ids` list is computed at runtime and slotted into the `in` clause. Expressing this as a single static JSON argument would require the model to know every flood-prone region by ID.
-
-## What this means for API design
-
-The filter DSL can stay simple. The intelligence moves into composition.
-
-- **Lookup tools become essential.** `listRegions`, `listEnumValues`, `resolveClientByName`. Boring on their own, indispensable when a script is composing filters.
-- **Return structured data, not prose.** IDs, typed fields, pagination cursors. The script needs to consume them programmatically.
-- **The DSL can be leaner.** A clean AND/OR/NOT structure with typed operators per field is easier for code to assemble correctly than a clever shorthand syntax.
-- **Aggregation moves to the sandbox.** You do not need bespoke server endpoints for every possible grouping or summary. The sandbox handles it.
-
-A leaner DSL plus programmatic calling often beats a baroque DSL with one-shot calls, because composition is what the model is actually good at when given code as the medium.
+- **Isolated**: no access to production data or other apps
+- **Ephemeral**: cleaned up when the app expires
+- **Safe**: generated SQL is executed, not raw user input
+- **Observable**: every query is logged with timing and results

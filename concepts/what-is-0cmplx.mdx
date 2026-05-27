@@ -1,67 +1,74 @@
 ---
 title: What is 0cmplx
-description: A research and experimental platform for testing AI agents, MCP servers, and tool integrations.
+description: A query composition engine for AI agents.
 ---
 
-0cmplx is a research and experimental platform. It exists because the space between AI models and the tools they call is still mostly unexplored, and the people building in that space need somewhere to experiment safely.
+0cmplx is a query composition engine. Connect your database, and it becomes an MCP server that AI agents can query in natural language.
 
-## What it does
+## The problem
 
-Connect your AI agent to mock MCP servers that simulate real-world tools: APIs, databases, file systems. Some behave well. Others are designed to break your agent, using attack patterns drawn from OWASP research: prompt injection, tool poisoning, excessive agency, data exfiltration.
+Every database needs an MCP server. Every MCP server needs tool definitions, parameter validation, query logic, and security testing. Multiply that by every database in your organisation and you have a project, not a feature.
 
-You watch what happens. You see which attacks land and which your agent resists. You get a security score and a performance profile. Then you iterate.
+## What 0cmplx does
 
-Bring your own API spec or database schema and 0cmplx becomes the execution layer between your LLM and your data.
+You provide a schema. 0cmplx does the rest.
 
-<CardGroup cols={2}>
-  <Card title="API mode" icon="plug">
-    Upload an OpenAPI spec. 0cmplx generates typed functions. The LLM writes a script. 0cmplx calls your API, filters responses, and returns only what matters.
-  </Card>
-  <Card title="SQL mode" icon="database">
-    Upload a schema. 0cmplx spins up an ephemeral database. The LLM writes queries. You see exactly what it generates and what comes back, against sample data instead of production.
-  </Card>
-</CardGroup>
+The engine parses your tables, columns, and foreign keys into a relationship graph. When a question arrives, the engine composes the correct SQL, joins across relationships, and executes in a sandboxed database. The result comes back as structured data.
 
-The LLM plans. 0cmplx executes. Any model, any provider, no lock-in.
+```
+"Get the balance for the user with phone +2781..."
 
-When you upload a spec or schema, 0cmplx builds a graph of how your endpoints and tables relate. Instead of showing the LLM everything, it surfaces only the relevant cluster per question. Fewer tokens, better tool selection, more accurate results.
+Engine knows:
+  users.phone → users.id
+  accounts.user_id → users.id
+  accounts.balance
+
+Composes:
+  SELECT a.balance FROM accounts a
+  JOIN users u ON a.user_id = u.id
+  WHERE u.phone = '+2781...'
+
+Returns: { balance: 12450.00 }
+```
+
+One tool call. No manual joins. No CRUD boilerplate.
+
+## Confidence-based execution
+
+Not every question maps cleanly to the schema. The engine scores its confidence:
+
+- **High confidence**: known tables, columns, and relationships. Executes immediately.
+- **Low confidence**: ambiguous terms or missing columns. Returns what it resolved and what it could not, without executing.
+
+The caller rephrases. The engine never guesses.
+
+## Security testing
+
+Every MCP server is an attack surface. 0cmplx includes OWASP-informed security traps that connect to any MCP server and probe for:
+
+- **Injection**: can a parameter carry a payload the server executes?
+- **Data exposure**: does a response include fields the caller should not see?
+- **Broken access**: can one user's request access another user's data?
+- **Resource exhaustion**: can a call consume unbounded resources?
+
+Run `0cmplx test --target <url>` and see what breaks.
 
 ## Who it is for
 
-**Developers building AI agents.** You have an agent that calls tools. You want to know if it handles adversarial inputs. You want to test it against MCP servers that fight back.
+**Developers building AI agents.** You need data access for your agent. You want a secure MCP server from your schema without building one by hand.
 
-**Developers building MCP servers.** You have a server. You want to know if it leaks data, accepts injected parameters, or exposes too much surface area. You want OWASP traps to probe it before your users do.
+**Developers building MCP servers.** You have a server. You want OWASP traps to probe it before your users do.
 
-**Researchers and experimenters.** You are curious about how AI models interact with tools. You want to try different models against the same test suite and compare behaviour. You want a controlled environment for exploring questions that do not have answers yet.
+**Platform teams.** You need a reliable infrastructure layer for tool execution. 0cmplx handles query composition and sandboxing. Your governance layer handles the rules.
 
-## What we believe
+## Try, develop, deploy
 
-The MCP protocol opened a door. AI models can now discover and call tools in a standardised way. But the ecosystem is young. Most MCP servers are built by hand, untested, and deployed without security review.
+**Try** with a sample database. No files, no credentials, no sign-up. Pick banking, ecommerce, or healthcare and start querying.
 
-We think the interesting questions are not about the protocol itself. They are about what happens when you put a language model on one end and a real API on the other:
+**Develop** with your schema. Upload a SQL file. Test with sandbox data. Iterate until the tools are right.
 
-- How does the model choose between 5 tools versus 50?
-- What happens when a tool description contains hidden instructions?
-- Can the model be tricked into calling a destructive endpoint?
-- Does the model leak sensitive data from tool responses back to the user?
-- How do you test all of this before it reaches production?
-
-0cmplx is where you explore these questions. Not in theory, but by running experiments.
-
-## On the roadmap
-
-<Steps>
-  <Step title="Execution streaming">
-    Watch the LLM write a script token by token. See each API call and SQL query execute in real-time. Full visibility into the execution pipeline, not just the final answer.
-  </Step>
-  <Step title="Organisation sandboxes">
-    Dedicated subdomains per organisation. Bring your team, share test suites, compare agent behaviour across models. Eventually, connect your own infrastructure.
-  </Step>
-  <Step title="Community test suites">
-    Publish and share OWASP trap configurations. Build on what others have tested. Contribute attack patterns back to the community.
-  </Step>
-</Steps>
+**Deploy** with credentials. Same schema, same tools, real data. Production credentials stay out of the loop until you are ready.
 
 ## The name
 
-0cmplx. Zero complexity. The goal is to make testing AI tool integrations as simple as uploading a spec and asking a question. The complexity is in the sandbox, not in your workflow.
+0cmplx. Zero complexity. One command to connect your database to AI agents. The complexity is in the engine, not in your workflow.
